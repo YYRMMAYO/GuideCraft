@@ -11,8 +11,8 @@ public partial class CodeBlockView : UserControl
         DependencyProperty.Register(nameof(Code), typeof(string), typeof(CodeBlockView),
             new PropertyMetadata(string.Empty, OnCodeChanged));
 
-    public static readonly DependencyProperty LanguageProperty =
-        DependencyProperty.Register(nameof(Language), typeof(string), typeof(CodeBlockView),
+    public static readonly DependencyProperty CodeLanguageProperty =
+        DependencyProperty.Register(nameof(CodeLanguage), typeof(string), typeof(CodeBlockView),
             new PropertyMetadata(string.Empty, OnLanguageChanged));
 
     public string Code
@@ -21,10 +21,10 @@ public partial class CodeBlockView : UserControl
         set => SetValue(CodeProperty, value);
     }
 
-    public string Language
+    public string CodeLanguage
     {
-        get => (string)GetValue(LanguageProperty);
-        set => SetValue(LanguageProperty, value);
+        get => (string)GetValue(CodeLanguageProperty);
+        set => SetValue(CodeLanguageProperty, value);
     }
 
     public CodeBlockView()
@@ -46,7 +46,7 @@ public partial class CodeBlockView : UserControl
     /// <summary>根据语言名应用 AvalonEdit 内置语法高亮（支持的子集：python/json/xml/sql）</summary>
     private void ApplyLanguageHighlighting()
     {
-        var lang = (Language ?? string.Empty).ToLowerInvariant();
+        var lang = (CodeLanguage ?? string.Empty).ToLowerInvariant();
         ICSharpCode.AvalonEdit.Highlighting.IHighlightingDefinition? def = null;
         try
         {
@@ -63,7 +63,7 @@ public partial class CodeBlockView : UserControl
         }
         catch { /* 高亮加载失败时降级为纯文本 */ }
         Editor.SyntaxHighlighting = def;
-        LangLabel.Text = string.IsNullOrEmpty(Language) ? "text" : Language.ToLowerInvariant();
+        LangLabel.Text = string.IsNullOrEmpty(CodeLanguage) ? "text" : CodeLanguage.ToLowerInvariant();
     }
 
     private void CopyButton_OnClick(object sender, RoutedEventArgs e)

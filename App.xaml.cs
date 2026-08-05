@@ -23,22 +23,24 @@ public partial class App : Application
         // ---- 依赖注入容器 ----
         var services = new ServiceCollection();
         services.AddSingleton<HttpClient>();
-        services.AddSingleton<IDeepSeekApiClient, DeepSeekApiClient>();
+        services.AddSingleton<ILlmClient, LlmApiClient>();
         services.AddSingleton<ILocalStorageService, LocalStorageService>();
         services.AddSingleton<ISettingsService, SettingsService>();
         services.AddSingleton<IChatService, ChatService>();
         services.AddSingleton<IRequirementSummarizer, RequirementSummarizer>();
         services.AddSingleton<ICodeGenerator, CodeGenerator>();
         services.AddSingleton<IProjectExporter, ProjectExporter>();
+        services.AddSingleton<IUpdateChecker, UpdateChecker>();
         services.AddSingleton<MainViewModel>();
         services.AddTransient<SettingsViewModel>();
         services.AddTransient<SettingsDialog>();
         services.AddTransient<MainWindow>();
         _provider = services.BuildServiceProvider();
 
-        // ---- 应用保存的主题 ----
+        // ---- 应用保存的主题与语言 ----
         var settings = _provider.GetRequiredService<ISettingsService>();
         ThemeManager.Apply(settings.Settings.Theme);
+        Localization.LocalizationManager.Apply(settings.Settings.Language);
 
         // ---- 主窗口 ----
         var window = _provider.GetRequiredService<MainWindow>();

@@ -33,7 +33,81 @@ public partial class MainViewModel : ObservableObject
         _messages.CollectionChanged += (_, _) => HasMessages = _messages.Count > 0;
 
         var settings = services.GetService<ISettingsService>();
-        _hasApiKey = settings is not null && !string.IsNullOrWhiteSpace(settings.Settings.ApiKey);
+        if (settings is not null)
+        {
+            _hasApiKey = !string.IsNullOrWhiteSpace(settings.Settings.ApiKey);
+            _isSidebarRight = settings.Settings.SidebarPosition != "Left";
+            _isWelcomeVisible = !settings.Settings.WelcomeShown;
+        }
+        StartWelcomeLoop();
+    }
+
+    // ---------- 布局与引导 ----------
+
+    /// <summary>导航栏（侧边栏）是否在右侧（可在设置中切换，默认右侧）</summary>
+    [ObservableProperty]
+    private bool _isSidebarRight = true;
+
+    /// <summary>首次引导教程是否可见</summary>
+    [ObservableProperty]
+    private bool _isWelcomeVisible;
+
+    /// <summary>引导轮播当前步骤（0-3）</summary>
+    [ObservableProperty]
+    private int _currentStep;
+
+    /// <summary>引导步骤数据（图标 + 文案 key）</summary>
+    private static readonly (string Icon, string TitleKey, string TextKey)[] WelcomeStepData =
+    {
+        ("🔑", "Str.Welcome.Step1Title", "Str.Welcome.Step1Text"),
+        ("💡", "Str.Welcome.Step2Title", "Str.Welcome.Step2Text"),
+        ("📋", "Str.Welcome.Step3Title", "Str.Welcome.Step3Text"),
+        ("🚀", "Str.Welcome.Step4Title", "Str.Welcome.Step4Text")
+    };
+
+    public string CurrentStepIcon => WelcomeStepData[CurrentStep].Icon;
+    public string CurrentStepTitle => Localization.LocalizationManager.Get(WelcomeStepData[CurrentStep].TitleKey);
+    public string CurrentStepText => Localization.LocalizationManager.Get(WelcomeStepData[CurrentStep].TextKey);
+
+    partial void OnCurrentStepChanged(int value)
+    {
+        OnPropertyChanged(nameof(CurrentStepIcon));
+        OnPropertyChanged(nameof(CurrentStepTitle));
+        OnPropertyChanged(nameof(CurrentStepText));
+        WelcomeStepChanged?.Invoke(value);
+    }
+
+    /// <summary>步骤变化（View 订阅播放动画）</summary>
+    public event Action<int>? WelcomeStepChanged;
+
+    private System.Windows.Threading.DispatcherTimer? _welcomeTimer;
+
+    private void StartWelcomeLoop()
+    {
+        if (!IsWelcomeVisible) return;
+        _welcomeTimer ??= new System.Windows.Threading.DispatcherTimer
+        {
+            Interval = TimeSpan.FromSeconds(3.2)
+        };
+        _welcomeTimer.Tick += (_, _) => CurrentStep = (CurrentStep + 1) % WelcomeStepData.Length;
+        _welcomeTimer.Start();
+    }
+
+    /// <summary>语言变化后刷新本地化文案（设置保存后调用）</summary>
+    public void RefreshLocalized()
+    {
+        OnPropertyChanged(nameof(CurrentStepTitle));
+        OnPropertyChanged(nameof(CurrentStepText));
+        OnPropertyChanged(nameof(CurrentStepIcon));
+    }
+
+    /// <summary>关闭引导教程并标记已展示</summary>
+    [RelayCommand]
+    private void CloseWelcome()
+    {
+        _welcomeTimer?.Stop();
+        IsWelcomeVisible = false;
+        _settings.MarkWelcomeShown();
     }
 
     // ---------- 消息列表 ----------
@@ -86,13 +160,16 @@ public partial class MainViewModel : ObservableObject
 
     // ---------- 服务懒解析 ----------
 
-    private IDeepSeekApiClient _api => _services.GetRequiredService<IDeepSeekApiClient>();
+    private ILlmClient _api => _services.GetRequiredService<ILlmClient>();
     private IChatService _chat => _services.GetRequiredService<IChatService>();
     private IRequirementSummarizer _summarizer => _services.GetRequiredService<IRequirementSummarizer>();
     private ICodeGenerator _codeGen => _services.GetRequiredService<ICodeGenerator>();
     private IProjectExporter _exporter => _services.GetRequiredService<IProjectExporter>();
     private ISettingsService _settings => _services.GetRequiredService<ISettingsService>();
     private ILocalStorageService _storage => _services.GetRequiredService<ILocalStorageService>();
+
+    /// <summary>当前模型接入信息</summary>
+    private LlmModelInfo ModelInfo => _settings.CurrentModelInfo;
 
     /// <summary>启动时加载会话列表</summary>
     public void LoadConversations()
@@ -228,6 +305,8 @@ public partial class MainViewModel : ObservableObject
         if (dialog.ShowDialog() == true)
         {
             HasApiKey = !string.IsNullOrWhiteSpace(_settings.Settings.ApiKey);
+            IsSidebarRight = _settings.Settings.SidebarPosition != "Left";
+            RefreshLocalized();
         }
     }
 
@@ -240,18 +319,22 @@ public partial class MainViewModel : ObservableObject
             FileName = SanitizeFileName(Conversation.Title) + ".zip",
             Filter = "ZIP 文件 (*.zip)|*.zip",
             DefaultExt = ".zip",
-            Title = "导出项目 ZIP"
+            Title = Localization.LocalizationManager.Get("Str.ExportZip")
         };
         if (dlg.ShowDialog() != true) return;
         try
         {
             _exporter.SaveTo(dlg.FileName, Conversation.Title, _lastGeneratedCode,
                 Conversation.GeneratedProject?.RequirementDocument ?? string.Empty);
-            MessageBox.Show($"已导出到：\n{dlg.FileName}", UiStrings.AppTitle, MessageBoxButton.OK, MessageBoxImage.Information);
+            MessageBox.Show(
+                UiStrings.ExportSuccess.Replace("{path}", dlg.FileName),
+                UiStrings.AppTitle, MessageBoxButton.OK, MessageBoxImage.Information);
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"导出失败：{ex.Message}", UiStrings.AppTitle, MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageBox.Show(
+                UiStrings.ExportFailed.Replace("{error}", ex.Message),
+                UiStrings.AppTitle, MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
 
@@ -267,10 +350,12 @@ public partial class MainViewModel : ObservableObject
         try
         {
             var apiMessages = BuildApiMessages();
+            var model = ModelInfo;
             await _api.StreamChatAsync(apiMessages, delta =>
                 _ui.InvokeAsync(() => assistant.AppendContent(delta)).Task,
                 _settings.Settings.ApiKey,
-                _settings.Settings.PreferredModel,
+                model.BaseUrl,
+                model.Id,
                 _cts.Token);
 
             // 流式完成后：Clarify → Confirm 自动切换
@@ -283,11 +368,11 @@ public partial class MainViewModel : ObservableObject
         catch (OperationCanceledException)
         {
             if (string.IsNullOrEmpty(assistant.Content))
-                assistant.Content = "（已停止生成）";
+                assistant.Content = UiStrings.StopGenerated;
             else
-                assistant.AppendContent("\n\n（已停止生成）");
+                assistant.AppendContent($"\n\n{UiStrings.StopGenerated}");
         }
-        catch (DeepSeekApiException ex)
+        catch (LlmApiException ex)
         {
             assistant.AppendContent($"\n\n⚠️ {MapApiError(ex.StatusCode)}");
         }
@@ -306,7 +391,7 @@ public partial class MainViewModel : ObservableObject
     {
         var statusVm = new ChatMessageViewModel(ChatRole.Assistant)
         {
-            Content = "✅ 收到确认，正在整理需求并生成代码..."
+            Content = UiStrings.GeneratingStatus
         };
         Messages.Add(statusVm);
 
@@ -318,13 +403,14 @@ public partial class MainViewModel : ObservableObject
                 .Select(m => new ChatApiMessage(m.Role, m.Content))
                 .ToList();
 
+            var model = ModelInfo;
+            var apiKey = _settings.Settings.ApiKey;
+
             // 2. 生成需求摘要
-            var reqDoc = await _summarizer.SummarizeAsync(
-                history, _settings.Settings.ApiKey, _settings.Settings.PreferredModel);
+            var reqDoc = await _summarizer.SummarizeAsync(history, apiKey, model);
 
             // 3. 生成代码
-            var code = await _codeGen.GenerateAsync(
-                reqDoc, _settings.Settings.ApiKey, _settings.Settings.PreferredModel);
+            var code = await _codeGen.GenerateAsync(reqDoc, apiKey, model);
             _lastGeneratedCode = code;
 
             // 4. 持久化到 Conversation
@@ -338,20 +424,20 @@ public partial class MainViewModel : ObservableObject
             };
 
             // 5. 用 Markdown 渲染展示产物
-            var depsLine = code.Dependencies.Count == 0 ? "（无第三方依赖）" : string.Join("、", code.Dependencies);
+            var depsLine = code.Dependencies.Count == 0 ? UiStrings.NoDeps : string.Join("、", code.Dependencies);
             var body = $$"""
-✅ 已生成 Python 脚本
+{{UiStrings.GeneratedHeader}}
 
 **{{code.Description}}**
 
-**依赖：** {{depsLine}}
+**{{UiStrings.Deps}}：** {{depsLine}}
 
 ```python
 {{code.Code}}
 ```
 
 ---
-你可以回复修改意见，我会更新代码；或点击下方「📦 导出项目 ZIP」按钮下载完整项目（{{UiStrings.NeedPythonHint}}）
+{{UiStrings.IterateHint}}（{{UiStrings.NeedPythonHint}}）
 """;
             statusVm.Content = body;
             Phase = ChatPhase.Iterate;
@@ -359,11 +445,11 @@ public partial class MainViewModel : ObservableObject
         }
         catch (OperationCanceledException)
         {
-            statusVm.Content = "（已停止生成）";
+            statusVm.Content = UiStrings.StopGenerated;
         }
         catch (Exception ex)
         {
-            statusVm.Content = $"❌ 生成失败：{ex.Message}\n\n请检查网络或 API Key 后重试。";
+            statusVm.Content = $"❌ {UiStrings.GenerateFailed}：{ex.Message}";
         }
     }
 

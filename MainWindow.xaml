@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="clr-namespace:GuideCraft.ViewModels"
         xmlns:controls="clr-namespace:GuideCraft.Controls"
-        Title="GuideCraft · 引导式AI助手"
+        Title="{DynamicResource Str.AppTitle}"
         Width="1100" Height="720"
         MinWidth="900" MinHeight="600"
         WindowStartupLocation="CenterScreen"
@@ -36,9 +36,15 @@
                     <TextBlock Text="GuideCraft" FontSize="16" FontWeight="Bold"
                                Foreground="{DynamicResource PrimaryTextBrush}"
                                VerticalAlignment="Center" Margin="10,0,0,0" />
-                    <TextBlock Text="引导式AI助手" FontSize="12"
+                    <TextBlock FontSize="12"
                                Foreground="{DynamicResource SecondaryTextBrush}"
-                               VerticalAlignment="Center" Margin="8,2,0,0" />
+                               VerticalAlignment="Center" Margin="8,2,0,0">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Text" Value="{DynamicResource Str.AppSubtitle}" />
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
                 </StackPanel>
 
                 <!-- 右侧操作区 -->
@@ -48,45 +54,77 @@
                             BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
                             CornerRadius="14" Padding="10,4" Margin="0,0,10,0">
                         <StackPanel Orientation="Horizontal">
-                            <Ellipse Width="8" Height="8" Fill="{DynamicResource WarningBrush}"
-                                     VerticalAlignment="Center" />
-                            <TextBlock Text="未配置 API Key" FontSize="11"
+                            <Ellipse x:Name="ApiKeyDot" Width="8" Height="8"
+                                     VerticalAlignment="Center">
+                                <Ellipse.Style>
+                                    <Style TargetType="Ellipse">
+                                        <Setter Property="Fill" Value="{DynamicResource WarningBrush}" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding HasApiKey}" Value="True">
+                                                <Setter Property="Fill" Value="{DynamicResource SuccessBrush}" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Ellipse.Style>
+                            </Ellipse>
+                            <TextBlock x:Name="ApiKeyText" FontSize="11"
                                        Foreground="{DynamicResource SecondaryTextBrush}"
-                                       Margin="6,0,0,0" VerticalAlignment="Center" />
+                                       Margin="6,0,0,0" VerticalAlignment="Center">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Text" Value="{DynamicResource Str.ApiKeyNotSet}" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding HasApiKey}" Value="True">
+                                                <Setter Property="Text" Value="{DynamicResource Str.ApiKeySet}" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
                         </StackPanel>
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Setter Property="Background" Value="{DynamicResource CardBackgroundBrush}" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding HasApiKey}" Value="True">
+                                        <Setter Property="BorderBrush" Value="{DynamicResource SuccessBrush}" />
+                                        <Setter Property="BorderThickness" Value="1" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
                     </Border>
 
                     <!-- 主题切换 -->
                     <Button Style="{StaticResource IconButtonStyle}" Content="☾"
                             Command="{Binding ToggleThemeCommand}"
-                            ToolTip="切换浅色/深色主题" Margin="0,0,4,0" />
+                            ToolTip="{DynamicResource Str.TooltipTheme}" Margin="0,0,4,0" />
 
                     <!-- 设置 -->
                     <Button Style="{StaticResource IconButtonStyle}" Content="⚙"
                             Command="{Binding OpenSettingsCommand}"
-                            ToolTip="设置" />
+                            ToolTip="{DynamicResource Str.TooltipSettings}" />
                 </StackPanel>
             </Grid>
         </Border>
 
-        <!-- ===================== 主体 ===================== -->
+        <!-- ===================== 主体（导航栏位置可切换，默认右侧） ===================== -->
         <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="230" MinWidth="180" />
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
 
-            <!-- ========== 左侧边栏 ========== -->
-            <Border Grid.Column="0" Background="{DynamicResource SidebarBackgroundBrush}"
+            <!-- ========== 导航栏（侧边栏） ========== -->
+            <Border Grid.Column="{Binding IsSidebarRight, Converter={StaticResource BoolToColumnConverter}}"
+                    Background="{DynamicResource SidebarBackgroundBrush}"
                     BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,1,0">
                 <DockPanel Margin="12">
-                    <!-- 新建对话 -->
                     <Button DockPanel.Dock="Top" Style="{StaticResource PrimaryButtonStyle}"
-                            Content="＋ 新对话"
+                            Content="{DynamicResource Str.NewChat}"
                             Command="{Binding NewConversationCommand}"
                             Margin="0,0,0,10" />
 
-                    <!-- 会话列表 -->
                     <ListBox ItemsSource="{Binding Conversations}"
                              SelectedItem="{Binding SelectedConversation}"
                              ItemContainerStyle="{StaticResource ConversationItemStyle}"
@@ -104,8 +142,8 @@
                 </DockPanel>
             </Border>
 
-            <!-- ========== 右侧对话区 ========== -->
-            <Grid Grid.Column="1">
+            <!-- ========== 对话区 ========== -->
+            <Grid Grid.Column="{Binding IsSidebarRight, Converter={StaticResource BoolToColumnConverter}, ConverterParameter=inverse}">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="*" />
                     <RowDefinition Height="Auto" />
@@ -118,29 +156,29 @@
                                   Background="Transparent"
                                   Padding="0,16,0,8">
                         <ItemsControl ItemsSource="{Binding Messages}" Margin="0,0,12,0">
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <Border x:Name="Bubble"
-                                        MaxWidth="680"
-                                        CornerRadius="12"
-                                        Padding="12,10"
-                                        Margin="16,4"
-                                        HorizontalAlignment="Left"
-                                        Background="{DynamicResource AiBubbleBackgroundBrush}"
-                                        BorderBrush="{DynamicResource BorderBrush}"
-                                        BorderThickness="1">
-                                    <controls:MarkdownView MarkdownText="{Binding Content}" />
-                                </Border>
-                                <DataTemplate.Triggers>
-                                    <DataTrigger Binding="{Binding IsUser}" Value="True">
-                                        <Setter TargetName="Bubble" Property="HorizontalAlignment" Value="Right" />
-                                        <Setter TargetName="Bubble" Property="Background" Value="{DynamicResource UserBubbleBackgroundBrush}" />
-                                        <Setter TargetName="Bubble" Property="BorderThickness" Value="0" />
-                                    </DataTrigger>
-                                </DataTemplate.Triggers>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border x:Name="Bubble"
+                                            MaxWidth="680"
+                                            CornerRadius="12"
+                                            Padding="12,10"
+                                            Margin="16,4"
+                                            HorizontalAlignment="Left"
+                                            Background="{DynamicResource AiBubbleBackgroundBrush}"
+                                            BorderBrush="{DynamicResource BorderBrush}"
+                                            BorderThickness="1">
+                                        <controls:MarkdownView MarkdownText="{Binding Content}" />
+                                    </Border>
+                                    <DataTemplate.Triggers>
+                                        <DataTrigger Binding="{Binding IsUser}" Value="True">
+                                            <Setter TargetName="Bubble" Property="HorizontalAlignment" Value="Right" />
+                                            <Setter TargetName="Bubble" Property="Background" Value="{DynamicResource UserBubbleBackgroundBrush}" />
+                                            <Setter TargetName="Bubble" Property="BorderThickness" Value="0" />
+                                        </DataTrigger>
+                                    </DataTemplate.Triggers>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
                     </ScrollViewer>
 
                     <!-- 空状态欢迎卡片 -->
@@ -150,31 +188,35 @@
                             <TextBlock Text="✦" FontSize="48"
                                        HorizontalAlignment="Center"
                                        Foreground="{DynamicResource AccentBrush}" />
-                            <TextBlock Text="欢迎使用 GuideCraft"
+                            <TextBlock Text="{DynamicResource Str.EmptyTitle}"
                                        FontSize="20" FontWeight="Bold"
                                        HorizontalAlignment="Center"
                                        Foreground="{DynamicResource PrimaryTextBrush}"
                                        Margin="0,12,0,8" />
-                            <TextBlock TextWrapping="Wrap" TextAlignment="Center"
+                            <TextBlock Text="{DynamicResource Str.EmptySubtitle}"
+                                       TextWrapping="Wrap" TextAlignment="Center"
                                        Foreground="{DynamicResource SecondaryTextBrush}"
-                                       LineHeight="22" FontSize="13"
-                                       Text="我会通过多轮提问帮你把模糊想法澄清为可执行的 Python 自动化脚本。" />
+                                       LineHeight="22" FontSize="13" />
                             <Border Background="{DynamicResource CardBackgroundBrush}"
                                     BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
                                     CornerRadius="10" Padding="16,12" Margin="0,20,0,0">
                                 <StackPanel>
-                                    <TextBlock Text="开始之前"
+                                    <TextBlock Text="{DynamicResource Str.EmptyBeforeStart}"
                                                FontSize="13" FontWeight="SemiBold"
                                                Foreground="{DynamicResource PrimaryTextBrush}" />
-                                    <TextBlock TextWrapping="Wrap" Margin="0,6,0,0" FontSize="12"
-                                               Foreground="{DynamicResource SecondaryTextBrush}" LineHeight="20"
-                                               Text="点击右上角 ⚙ 设置，配置 DeepSeek API Key 后即可开始引导式对话。" />
+                                    <TextBlock Text="{DynamicResource Str.EmptyBeforeStartHint}"
+                                               TextWrapping="Wrap" Margin="0,6,0,0" FontSize="12"
+                                               Foreground="{DynamicResource SecondaryTextBrush}" LineHeight="20" />
                                 </StackPanel>
                             </Border>
-                            <TextBlock Text="例如：&#x0a;· 我想做一个自动整理每天邮件的脚本&#x0a;· 帮我从 Excel 提取数据并生成报表&#x0a;· 想监控某个网站价格变化并通知我"
-                                       TextWrapping="Wrap" TextAlignment="Center" FontSize="12"
-                                       Foreground="{DynamicResource SecondaryTextBrush}"
-                                       LineHeight="20" Margin="0,16,0,0" />
+                            <StackPanel Margin="0,16,0,0">
+                                <TextBlock Text="{DynamicResource Str.EmptyExample1}" FontSize="12"
+                                           Foreground="{DynamicResource SecondaryTextBrush}" HorizontalAlignment="Center" />
+                                <TextBlock Text="{DynamicResource Str.EmptyExample2}" FontSize="12"
+                                           Foreground="{DynamicResource SecondaryTextBrush}" Margin="0,4,0,0" HorizontalAlignment="Center" />
+                                <TextBlock Text="{DynamicResource Str.EmptyExample3}" FontSize="12"
+                                           Foreground="{DynamicResource SecondaryTextBrush}" Margin="0,4,0,0" HorizontalAlignment="Center" />
+                            </StackPanel>
                         </StackPanel>
                     </Border>
                 </Grid>
@@ -191,19 +233,19 @@
                     <!-- 导出项目 ZIP（生成产物后显示） -->
                     <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="16,12,16,8"
                                 Visibility="{Binding CanExport, Converter={StaticResource BoolToVisibilityConverter}}">
-                            <Button Style="{StaticResource SecondaryButtonStyle}"
-                                    Content="📦 导出项目 ZIP"
-                                    Command="{Binding ExportZipCommand}"
-                                    Padding="14,7" />
-                            <TextBlock Text="生成产物后点击下载完整项目（main.py + 依赖 + README）"
-                                       FontSize="11" Foreground="{DynamicResource SecondaryTextBrush}"
-                                       VerticalAlignment="Center" Margin="10,0,0,0" />
-                        </StackPanel>
+                        <Button Style="{StaticResource SecondaryButtonStyle}"
+                                Content="{DynamicResource Str.ExportZip}"
+                                Command="{Binding ExportZipCommand}"
+                                Padding="14,7" />
+                        <TextBlock Text="{DynamicResource Str.ExportHint}"
+                                   FontSize="11" Foreground="{DynamicResource SecondaryTextBrush}"
+                                   VerticalAlignment="Center" Margin="10,0,0,0" />
+                    </StackPanel>
 
-                        <Border Grid.Row="1" Background="{DynamicResource InputBackgroundBrush}"
-                                BorderBrush="{DynamicResource InputBorderBrush}"
-                                BorderThickness="1" CornerRadius="12"
-                                Padding="14,10,14,10">
+                    <Border Grid.Row="1" Background="{DynamicResource InputBackgroundBrush}"
+                            BorderBrush="{DynamicResource InputBorderBrush}"
+                            BorderThickness="1" CornerRadius="12"
+                            Padding="14,10,14,10" Margin="16,0,16,12">
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
@@ -220,20 +262,20 @@
                                      Padding="4,4"
                                      FontSize="13.5"
                                      KeyDown="InputBox_OnKeyDown"
-                                     ToolTip="Enter 发送，Shift+Enter 换行" />
+                                     ToolTip="{DynamicResource Str.InputTooltip}" />
 
                             <StackPanel Grid.Column="1" Orientation="Horizontal"
                                         VerticalAlignment="Bottom" Margin="10,0,0,0">
                                 <!-- 停止生成（流式时显示） -->
                                 <Button x:Name="StopButton"
                                         Style="{StaticResource SecondaryButtonStyle}"
-                                        Content="■ 停止"
+                                        Content="{DynamicResource Str.Stop}"
                                         Command="{Binding StopCommand}"
                                         Visibility="{Binding IsStreaming, Converter={StaticResource BoolToVisibilityConverter}}"
                                         Margin="0,0,8,0" />
                                 <!-- 发送 -->
                                 <Button Style="{StaticResource PrimaryButtonStyle}"
-                                        Content="发送 ➤"
+                                        Content="{DynamicResource Str.Send}"
                                         Command="{Binding SendCommand}"
                                         IsEnabled="{Binding CanSend}"
                                         Padding="20,9" />
@@ -243,5 +285,66 @@
                 </Grid>
             </Grid>
         </Grid>
+
+        <!-- ===================== 首次引导教程（覆盖层） ===================== -->
+        <Border x:Name="WelcomeOverlay" Grid.RowSpan="2"
+                Background="{DynamicResource OverlayBrush}"
+                Visibility="{Binding IsWelcomeVisible, Converter={StaticResource BoolToVisibilityConverter}}">
+            <Grid>
+                <Border x:Name="WelcomeCard"
+                        Background="{DynamicResource CardBackgroundBrush}"
+                        BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
+                        CornerRadius="20"
+                        Width="540" Padding="44,40"
+                        VerticalAlignment="Center" HorizontalAlignment="Center"
+                        RenderTransformOrigin="0.5,0.5">
+                    <Border.RenderTransform>
+                        <TransformGroup>
+                            <ScaleTransform x:Name="WelcomeCardScale" ScaleX="1" ScaleY="1" />
+                            <TranslateTransform x:Name="WelcomeCardTranslate" Y="0" />
+                        </TransformGroup>
+                    </Border.RenderTransform>
+                    <StackPanel>
+                        <TextBlock x:Name="WelcomeIconText"
+                                   Text="{Binding CurrentStepIcon}"
+                                   FontSize="56" HorizontalAlignment="Center" />
+                        <TextBlock x:Name="WelcomeTitleText"
+                                   Text="{Binding CurrentStepTitle}"
+                                   FontSize="22" FontWeight="Bold"
+                                   Foreground="{DynamicResource PrimaryTextBrush}"
+                                   HorizontalAlignment="Center" Margin="0,16,0,8" />
+                        <TextBlock x:Name="WelcomeBodyText"
+                                   Text="{Binding CurrentStepText}"
+                                   FontSize="14"
+                                   Foreground="{DynamicResource SecondaryTextBrush}"
+                                   TextWrapping="Wrap" TextAlignment="Center" LineHeight="24" />
+
+                        <!-- 步骤指示点 -->
+                        <StackPanel x:Name="DotsPanel" Orientation="Horizontal"
+                                    HorizontalAlignment="Center" Margin="0,22,0,0">
+                            <Ellipse x:Name="Dot0" Width="8" Height="8" Margin="0,0,7,0"
+                                     Fill="{DynamicResource AccentBrush}" />
+                            <Ellipse x:Name="Dot1" Width="8" Height="8" Margin="0,0,7,0"
+                                     Fill="{DynamicResource SecondaryTextBrush}" />
+                            <Ellipse x:Name="Dot2" Width="8" Height="8" Margin="0,0,7,0"
+                                     Fill="{DynamicResource SecondaryTextBrush}" />
+                            <Ellipse x:Name="Dot3" Width="8" Height="8"
+                                     Fill="{DynamicResource SecondaryTextBrush}" />
+                        </StackPanel>
+
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,26,0,0">
+                            <Button Style="{StaticResource SecondaryButtonStyle}"
+                                    Content="{DynamicResource Str.Welcome.Skip}"
+                                    Command="{Binding CloseWelcomeCommand}"
+                                    Width="96" Margin="0,0,10,0" />
+                            <Button Style="{StaticResource PrimaryButtonStyle}"
+                                    Content="{DynamicResource Str.Welcome.Start}"
+                                    Command="{Binding CloseWelcomeCommand}"
+                                    Width="128" />
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </Border>
     </Grid>
 </Window>

@@ -1,49 +1,53 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
-    <!-- ===================== 深色主题（同名 key，不同值） ===================== -->
+    <!-- ============ 深色主题 v2：对比度优化（层次分明） ============ -->
     <Color x:Key="AccentColor">#6E8BFF</Color>
     <SolidColorBrush x:Key="AccentBrush" Color="{StaticResource AccentColor}" />
     <SolidColorBrush x:Key="AccentHoverBrush" Color="#5A7BF2" />
     <SolidColorBrush x:Key="AccentPressedBrush" Color="#4A68D6" />
 
-    <SolidColorBrush x:Key="WindowBackgroundBrush" Color="#16171A" />
-    <SolidColorBrush x:Key="SidebarBackgroundBrush" Color="#1B1C20" />
-    <SolidColorBrush x:Key="CardBackgroundBrush" Color="#232428" />
-    <SolidColorBrush x:Key="HeaderBackgroundBrush" Color="#1E1F22" />
+    <!-- 背景分层：窗口 → 侧边栏 → 头部 → 卡片 -->
+    <SolidColorBrush x:Key="WindowBackgroundBrush" Color="#141517" />
+    <SolidColorBrush x:Key="SidebarBackgroundBrush" Color="#191A1D" />
+    <SolidColorBrush x:Key="HeaderBackgroundBrush" Color="#1B1C1F" />
+    <SolidColorBrush x:Key="CardBackgroundBrush" Color="#222327" />
 
-    <SolidColorBrush x:Key="PrimaryTextBrush" Color="#E6E6E6" />
-    <SolidColorBrush x:Key="SecondaryTextBrush" Color="#9AA0A8" />
-    <SolidColorBrush x:Key="TertiaryTextBrush" Color="#6B7078" />
+    <!-- 文字层级（主/次/弱，对比度达标） -->
+    <SolidColorBrush x:Key="PrimaryTextBrush" Color="#F2F3F5" />
+    <SolidColorBrush x:Key="SecondaryTextBrush" Color="#A9B1BC" />
+    <SolidColorBrush x:Key="TertiaryTextBrush" Color="#6E7580" />
 
-    <SolidColorBrush x:Key="InputBackgroundBrush" Color="#2A2B2E" />
-    <SolidColorBrush x:Key="InputBorderBrush" Color="#3F4043" />
+    <SolidColorBrush x:Key="InputBackgroundBrush" Color="#282A2E" />
+    <SolidColorBrush x:Key="InputBorderBrush" Color="#3D4046" />
     <SolidColorBrush x:Key="InputFocusBorderBrush" Color="#6E8BFF" />
 
+    <!-- 气泡 -->
     <SolidColorBrush x:Key="UserBubbleBackgroundBrush" Color="#6E8BFF" />
     <SolidColorBrush x:Key="UserBubbleTextBrush" Color="#FFFFFF" />
-    <SolidColorBrush x:Key="AiBubbleBackgroundBrush" Color="#2A2B2E" />
-    <SolidColorBrush x:Key="AiBubbleTextBrush" Color="#E6E6E6" />
+    <SolidColorBrush x:Key="AiBubbleBackgroundBrush" Color="#232428" />
+    <SolidColorBrush x:Key="AiBubbleTextBrush" Color="#F2F3F5" />
 
-    <SolidColorBrush x:Key="BorderBrush" Color="#33343A" />
-    <SolidColorBrush x:Key="DividerBrush" Color="#2A2B2E" />
+    <!-- 边框 / 分隔线 -->
+    <SolidColorBrush x:Key="BorderBrush" Color="#35373D" />
+    <SolidColorBrush x:Key="DividerBrush" Color="#2A2C31" />
 
-    <SolidColorBrush x:Key="CodeBackgroundBrush" Color="#1B1C1F" />
-    <SolidColorBrush x:Key="CodeBorderBrush" Color="#33343A" />
-    <SolidColorBrush x:Key="CodeTextBrush" Color="#D6DDE5" />
-    <SolidColorBrush x:Key="InlineCodeBackgroundBrush" Color="#33343A" />
-    <SolidColorBrush x:Key="InlineCodeTextBrush" Color="#E5A05A" />
+    <!-- 代码区域：更深底色 + 高亮文字 -->
+    <SolidColorBrush x:Key="CodeBackgroundBrush" Color="#0F1013" />
+    <SolidColorBrush x:Key="CodeBorderBrush" Color="#35373D" />
+    <SolidColorBrush x:Key="CodeTextBrush" Color="#E8EAED" />
+    <SolidColorBrush x:Key="InlineCodeBackgroundBrush" Color="#33353B" />
+    <SolidColorBrush x:Key="InlineCodeTextBrush" Color="#F0A85C" />
 
-    <SolidColorBrush x:Key="HoverBackgroundBrush" Color="#2F3136" />
-    <SolidColorBrush x:Key="SelectedBackgroundBrush" Color="#2A3558" />
-    <SolidColorBrush x:Key="ScrollbarThumbBrush" Color="#4A4C50" />
-    <SolidColorBrush x:Key="ScrollbarThumbHoverBrush" Color="#5A5C62" />
-    <SolidColorBrush x:Key="ToolTipBackgroundBrush" Color="#2F3136" />
+    <SolidColorBrush x:Key="HoverBackgroundBrush" Color="#2E3036" />
+    <SolidColorBrush x:Key="SelectedBackgroundBrush" Color="#2E3A63" />
+    <SolidColorBrush x:Key="ScrollbarThumbBrush" Color="#4A4D54" />
+    <SolidColorBrush x:Key="ScrollbarThumbHoverBrush" Color="#5C6068" />
+    <SolidColorBrush x:Key="ToolTipBackgroundBrush" Color="#2E3036" />
 
     <SolidColorBrush x:Key="SuccessBrush" Color="#3DD68C" />
     <SolidColorBrush x:Key="WarningBrush" Color="#E8A33D" />
     <SolidColorBrush x:Key="DangerBrush" Color="#F2555A" />
 
-    <SolidColorBrush x:Key="OverlayBrush" Color="#99000000" />
-
+    <SolidColorBrush x:Key="OverlayBrush" Color="#B3000000" />
 </ResourceDictionary>

@@ -1,13 +1,24 @@
 using System.Globalization;
 using System.Windows.Data;
+using GuideCraft.Localization;
 
 namespace GuideCraft.Converters;
 
-/// <summary>测试按钮文字：IsTesting → "测试中..." / "测试连接"</summary>
+/// <summary>按钮文字转换：IsBusy → 进行中文案 / 空闲文案。
+/// ConverterParameter：test → 测试连接；update → 检查更新</summary>
 public class TestTextConverter : IValueConverter
 {
     public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
-        => value is true ? "测试中..." : "测试连接";
+    {
+        var kind = parameter as string ?? "test";
+        if (value is true)
+            return kind == "update"
+                ? LocalizationManager.Get("Str.SettingsCheckingUpdate")
+                : LocalizationManager.Get("Str.SettingsTesting");
+        return kind == "update"
+            ? LocalizationManager.Get("Str.SettingsCheckUpdate")
+            : LocalizationManager.Get("Str.SettingsTestConnection");
+    }
 
     public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
         => throw new NotSupportedException();

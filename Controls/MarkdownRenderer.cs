@@ -76,7 +76,7 @@ public static class MarkdownRenderer
                 doc.Blocks.Add(new BlockUIContainer(MakeSeparator()));
                 break;
             case FencedCodeBlock fc:
-                doc.Blocks.Add(MakeCodeBlock(fc.Info, fc.Lines.ToString()));
+                doc.Blocks.Add(MakeCodeBlock(fc.Info ?? string.Empty, fc.Lines.ToString()));
                 break;
             case CodeBlock cb:
                 doc.Blocks.Add(MakeCodeBlock(string.Empty, cb.Lines.ToString()));
@@ -166,7 +166,7 @@ public static class MarkdownRenderer
 
     private static BlockUIContainer MakeCodeBlock(string language, string code)
     {
-        var cb = new CodeBlockView { Language = (language ?? string.Empty).Trim(), Code = code ?? string.Empty };
+        var cb = new CodeBlockView { CodeLanguage = (language ?? string.Empty).Trim(), Code = code ?? string.Empty };
         return new BlockUIContainer(cb) { Margin = new Thickness(0, 6, 0, 6) };
     }
 

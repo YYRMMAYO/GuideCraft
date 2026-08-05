@@ -12,15 +12,15 @@ public interface IRequirementSummarizer
     Task<string> SummarizeAsync(
         IReadOnlyList<ChatApiMessage> conversation,
         string apiKey,
-        string model,
+        LlmModelInfo model,
         CancellationToken ct = default);
 }
 
 public sealed class RequirementSummarizer : IRequirementSummarizer
 {
-    private readonly IDeepSeekApiClient _api;
+    private readonly ILlmClient _api;
 
-    public RequirementSummarizer(IDeepSeekApiClient api)
+    public RequirementSummarizer(ILlmClient api)
     {
         _api = api;
     }
@@ -28,7 +28,7 @@ public sealed class RequirementSummarizer : IRequirementSummarizer
     public async Task<string> SummarizeAsync(
         IReadOnlyList<ChatApiMessage> conversation,
         string apiKey,
-        string model,
+        LlmModelInfo model,
         CancellationToken ct = default)
     {
         var transcript = new StringBuilder();
@@ -44,7 +44,7 @@ public sealed class RequirementSummarizer : IRequirementSummarizer
             new(ChatRole.System, "你是专业的中文需求分析师。"),
             new(ChatRole.User, prompt)
         };
-        var text = await _api.ChatAsync(messages, apiKey, model, ct);
+        var text = await _api.ChatAsync(messages, apiKey, model.BaseUrl, model.Id, ct);
         return text.Trim();
     }
 }
@@ -56,15 +56,15 @@ public interface ICodeGenerator
     Task<GeneratedCode> GenerateAsync(
         string requirementDocument,
         string apiKey,
-        string model,
+        LlmModelInfo model,
         CancellationToken ct = default);
 }
 
 public sealed class CodeGenerator : ICodeGenerator
 {
-    private readonly IDeepSeekApiClient _api;
+    private readonly ILlmClient _api;
 
-    public CodeGenerator(IDeepSeekApiClient api)
+    public CodeGenerator(ILlmClient api)
     {
         _api = api;
     }
@@ -72,7 +72,7 @@ public sealed class CodeGenerator : ICodeGenerator
     public async Task<GeneratedCode> GenerateAsync(
         string requirementDocument,
         string apiKey,
-        string model,
+        LlmModelInfo model,
         CancellationToken ct = default)
     {
         var prompt = PromptTemplates.CodeGenerationPrompt.Replace("{requirementDocument}", requirementDocument);
@@ -81,7 +81,7 @@ public sealed class CodeGenerator : ICodeGenerator
             new(ChatRole.System, "你是资深 Python 工程师。"),
             new(ChatRole.User, prompt)
         };
-        var raw = await _api.ChatAsync(messages, apiKey, model, ct);
+        var raw = await _api.ChatAsync(messages, apiKey, model.BaseUrl, model.Id, ct);
         return ParseGeneratedCode(raw);
     }
 

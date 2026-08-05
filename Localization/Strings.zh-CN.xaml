@@ -1,0 +1,94 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=System.Runtime">
+
+    <!-- ============ GuideCraft 界面文案（简体中文） ============ -->
+    <sys:String x:Key="Str.AppTitle">GuideCraft · 引导式AI助手</sys:String>
+    <sys:String x:Key="Str.AppSubtitle">引导式AI助手</sys:String>
+    <sys:String x:Key="Str.NewChat">＋ 新对话</sys:String>
+    <sys:String x:Key="Str.ApiKeyNotSet">未配置 API Key</sys:String>
+    <sys:String x:Key="Str.ApiKeySet">API Key 已配置</sys:String>
+    <sys:String x:Key="Str.TooltipTheme">切换浅色/深色主题</sys:String>
+    <sys:String x:Key="Str.TooltipSettings">设置</sys:String>
+    <sys:String x:Key="Str.InputTooltip">Enter 发送，Shift+Enter 换行</sys:String>
+    <sys:String x:Key="Str.Send">发送 ➤</sys:String>
+    <sys:String x:Key="Str.Stop">■ 停止</sys:String>
+    <sys:String x:Key="Str.ExportZip">📦 导出项目 ZIP</sys:String>
+    <sys:String x:Key="Str.ExportHint">生成产物后点击下载完整项目（main.py + 依赖 + README）</sys:String>
+    <sys:String x:Key="Str.ExportSuccess">已导出到：&#x0a;{path}</sys:String>
+    <sys:String x:Key="Str.ExportFailed">导出失败：{error}</sys:String>
+
+    <sys:String x:Key="Str.EmptyTitle">欢迎使用 GuideCraft</sys:String>
+    <sys:String x:Key="Str.EmptySubtitle">我会通过多轮提问帮你把模糊想法澄清为可执行的 Python 自动化脚本。</sys:String>
+    <sys:String x:Key="Str.EmptyBeforeStart">开始之前</sys:String>
+    <sys:String x:Key="Str.EmptyBeforeStartHint">点击右上角 ⚙ 设置，配置大模型 API Key 后即可开始引导式对话。</sys:String>
+    <sys:String x:Key="Str.EmptyExample1">· 我想做一个自动整理每天邮件的脚本</sys:String>
+    <sys:String x:Key="Str.EmptyExample2">· 帮我从 Excel 提取数据并生成报表</sys:String>
+    <sys:String x:Key="Str.EmptyExample3">· 想监控某个网站价格变化并通知我</sys:String>
+
+    <sys:String x:Key="Str.SettingsTitle">设置</sys:String>
+    <sys:String x:Key="Str.SettingsApiKeyTitle">🔑 API Key</sys:String>
+    <sys:String x:Key="Str.SettingsApiKeyGuide">前往平台注册并创建 API Key（免费额度即可满足日常使用）。Key 仅保存在你本机（DPAPI 加密），不会上传。</sys:String>
+    <sys:String x:Key="Str.SettingsApiKeyLabel">API Key</sys:String>
+    <sys:String x:Key="Str.SettingsTestConnection">测试连接</sys:String>
+    <sys:String x:Key="Str.SettingsTesting">测试中...</sys:String>
+    <sys:String x:Key="Str.SettingsTestNoKey">请先填写 API Key</sys:String>
+    <sys:String x:Key="Str.SettingsTestOk">✅ 连接成功，API Key 可用</sys:String>
+    <sys:String x:Key="Str.SettingsTestFail">❌ 连接失败，请检查 Key 是否正确</sys:String>
+    <sys:String x:Key="Str.SettingsTestNetworkError">❌ 网络异常，请稍后重试</sys:String>
+    <sys:String x:Key="Str.SettingsProvider">模型提供方</sys:String>
+    <sys:String x:Key="Str.SettingsModel">模型</sys:String>
+    <sys:String x:Key="Str.SettingsLanguage">语言 / Language</sys:String>
+    <sys:String x:Key="Str.SettingsTheme">界面主题</sys:String>
+    <sys:String x:Key="Str.SettingsSidebar">导航栏位置</sys:String>
+    <sys:String x:Key="Str.SettingsSidebarLeft">左侧</sys:String>
+    <sys:String x:Key="Str.SettingsSidebarRight">右侧</sys:String>
+    <sys:String x:Key="Str.SettingsSave">保存</sys:String>
+    <sys:String x:Key="Str.SettingsCancel">取消</sys:String>
+    <sys:String x:Key="Str.SettingsAbout">关于</sys:String>
+    <sys:String x:Key="Str.SettingsVersion">版本</sys:String>
+    <sys:String x:Key="Str.SettingsCheckUpdate">检查更新</sys:String>
+    <sys:String x:Key="Str.SettingsCheckingUpdate">检查中...</sys:String>
+    <sys:String x:Key="Str.SettingsUpToDate">✅ 已是最新版本</sys:String>
+    <sys:String x:Key="Str.SettingsNewVersion">发现新版本 {version}</sys:String>
+    <sys:String x:Key="Str.SettingsOpenRelease">前往下载</sys:String>
+    <sys:String x:Key="Str.SettingsUpdateFailed">检查更新失败（网络异常）</sys:String>
+
+    <sys:String x:Key="Str.Chat.NoApiKeyHint">请先配置 API Key：点击右上角 ⚙ 设置，前往平台申请 Key 后填入。</sys:String>
+    <sys:String x:Key="Str.Chat.ApiKeyInvalid">API Key 无效或已失效，请到设置中更新 Key。</sys:String>
+    <sys:String x:Key="Str.Chat.RateLimited">请求过于频繁（限流），请稍后再试。</sys:String>
+    <sys:String x:Key="Str.Chat.ServerError">服务暂时不可用，请稍后重试。</sys:String>
+    <sys:String x:Key="Str.Chat.NetworkError">网络连接异常，请检查网络后重试。</sys:String>
+    <sys:String x:Key="Str.Chat.StreamTimeout">响应超时，请稍后重试。</sys:String>
+    <sys:String x:Key="Str.Chat.ConfirmGenerateHint">✅ 需求已明确。回复「确认」即可生成 Python 代码，或继续补充说明。</sys:String>
+    <sys:String x:Key="Str.Chat.StopGenerated">（已停止生成）</sys:String>
+    <sys:String x:Key="Str.Chat.GeneratingStatus">✅ 收到确认，正在整理需求并生成代码...</sys:String>
+    <sys:String x:Key="Str.Chat.GeneratedHeader">✅ 已生成 Python 脚本</sys:String>
+    <sys:String x:Key="Str.Chat.Deps">依赖</sys:String>
+    <sys:String x:Key="Str.Chat.NoDeps">（无第三方依赖）</sys:String>
+    <sys:String x:Key="Str.Chat.IterateHint">你可以回复修改意见，我会更新代码；或点击下方「📦 导出项目 ZIP」按钮下载完整项目</sys:String>
+    <sys:String x:Key="Str.Chat.NeedPythonHint">需安装 Python 3.8+ 后运行</sys:String>
+    <sys:String x:Key="Str.Chat.GenerateFailed">生成失败</sys:String>
+
+    <sys:String x:Key="Str.Welcome.Title">欢迎使用 GuideCraft</sys:String>
+    <sys:String x:Key="Str.Welcome.Subtitle">4 步快速上手：把你的想法变成可运行的自动化脚本</sys:String>
+    <sys:String x:Key="Str.Welcome.Step1Title">配置 API Key</sys:String>
+    <sys:String x:Key="Str.Welcome.Step1Text">点击右上角 ⚙ 设置，前往阿里云百炼或 DeepSeek 平台免费申请 Key</sys:String>
+    <sys:String x:Key="Str.Welcome.Step2Title">描述你的想法</sys:String>
+    <sys:String x:Key="Str.Welcome.Step2Text">用一句话说你想自动化什么，AI 会像顾问一样引导你逐步澄清细节</sys:String>
+    <sys:String x:Key="Str.Welcome.Step3Title">确认需求摘要</sys:String>
+    <sys:String x:Key="Str.Welcome.Step3Text">AI 生成结构化需求文档，确认后自动为你编写 Python 代码</sys:String>
+    <sys:String x:Key="Str.Welcome.Step4Title">导出运行</sys:String>
+    <sys:String x:Key="Str.Welcome.Step4Text">一键导出项目 ZIP，安装依赖后即可运行你的自动化脚本</sys:String>
+    <sys:String x:Key="Str.Welcome.Start">开始使用</sys:String>
+    <sys:String x:Key="Str.Welcome.Skip">跳过引导</sys:String>
+
+    <sys:String x:Key="Str.CodeBlock.Copy">📋 复制</sys:String>
+    <sys:String x:Key="Str.CodeBlock.Copied">✓ 已复制</sys:String>
+    <sys:String x:Key="Str.CodeBlock.CopyFailed">复制失败</sys:String>
+
+    <sys:String x:Key="Str.Provider.Qwen">千问 Qwen（推荐 · 免费额度）</sys:String>
+    <sys:String x:Key="Str.Provider.DeepSeek">DeepSeek</sys:String>
+    <sys:String x:Key="Str.SettingsKeyHint.Qwen">前往阿里云百炼控制台创建 DashScope API Key（新用户有免费额度）</sys:String>
+    <sys:String x:Key="Str.SettingsKeyHint.DeepSeek">前往 DeepSeek 开放平台创建 API Key（免费额度即可日常使用）</sys:String>
+</ResourceDictionary>

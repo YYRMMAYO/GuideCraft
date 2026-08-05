@@ -5,18 +5,52 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace GuideCraft.Services;
 
-/// <summary>设置服务实现：API Key 经 DPAPI 加密存 SQLite，模型/主题直接落盘</summary>
+/// <summary>设置服务：API Key（DPAPI 加密）、模型、主题、语言、导航栏位置的持久化读写</summary>
+public interface ISettingsService
+{
+    /// <summary>获取设置（内存缓存）</summary>
+    UserSettings Settings { get; }
+
+    /// <summary>当前模型接入信息（按 PreferredModel 推导，未知则回退默认）</summary>
+    LlmModelInfo CurrentModelInfo { get; }
+
+    /// <summary>保存 API Key（加密落盘）</summary>
+    void SaveApiKey(string apiKey);
+
+    /// <summary>保存偏好模型</summary>
+    void SaveModel(string model);
+
+    /// <summary>保存主题</summary>
+    void SaveTheme(string theme);
+
+    /// <summary>保存语言</summary>
+    void SaveLanguage(string language);
+
+    /// <summary>保存导航栏位置</summary>
+    void SaveSidebarPosition(string position);
+
+    /// <summary>标记首次引导已展示</summary>
+    void MarkWelcomeShown();
+
+    /// <summary>测试 API Key 是否可用（调用轻量接口）</summary>
+    Task<bool> TestConnectionAsync(string apiKey, string modelId, CancellationToken ct = default);
+}
+
+/// <summary>设置服务实现：API Key 经 DPAPI 加密存 SQLite，其余设置直接落盘</summary>
 public sealed class SettingsService : ISettingsService
 {
     private const string KeyApiKey = "api_key";
     private const string KeyModel = "preferred_model";
     private const string KeyTheme = "theme";
+    private const string KeyLanguage = "language";
+    private const string KeySidebar = "sidebar_position";
+    private const string KeyWelcomeShown = "welcome_shown";
 
     private readonly ILocalStorageService _storage;
-    private readonly IDeepSeekApiClient _api;
+    private readonly ILlmClient _api;
     private UserSettings? _cache;
 
-    public SettingsService(ILocalStorageService storage, IDeepSeekApiClient api)
+    public SettingsService(ILocalStorageService storage, ILlmClient api)
     {
         _storage = storage;
         _api = api;
@@ -31,22 +65,30 @@ public sealed class SettingsService : ISettingsService
             _cache = new UserSettings
             {
                 ApiKey = TryDecrypt(_storage.GetSetting(KeyApiKey) ?? string.Empty),
-                PreferredModel = _storage.GetSetting(KeyModel) ?? "deepseek-v4-flash",
-                Theme = _storage.GetSetting(KeyTheme) ?? "Light"
+                PreferredModel = _storage.GetSetting(KeyModel) ?? "qwen-plus",
+                Theme = _storage.GetSetting(KeyTheme) ?? "Light",
+                Language = _storage.GetSetting(KeyLanguage) ?? "zh-CN",
+                SidebarPosition = _storage.GetSetting(KeySidebar) ?? "Right",
+                WelcomeShown = _storage.GetSetting(KeyWelcomeShown) == "1"
             };
             return _cache;
         }
     }
 
+    public LlmModelInfo CurrentModelInfo
+        => LlmCatalog.Find(Settings.PreferredModel) ?? LlmCatalog.Default;
+
     public void SaveApiKey(string apiKey)
     {
-        var encrypted = Encrypt(apiKey);
+        var trimmed = (apiKey ?? string.Empty).Trim();
+        var encrypted = Encrypt(trimmed);
         _storage.SetSetting(KeyApiKey, encrypted);
-        Settings.ApiKey = apiKey;
+        Settings.ApiKey = trimmed;
     }
 
     public void SaveModel(string model)
     {
+        if (LlmCatalog.Find(model) is null) return; // 拒绝未知模型
         _storage.SetSetting(KeyModel, model);
         Settings.PreferredModel = model;
     }
@@ -57,13 +99,34 @@ public sealed class SettingsService : ISettingsService
         Settings.Theme = theme;
     }
 
-    public async Task<bool> TestConnectionAsync(string apiKey, string model, CancellationToken ct = default)
+    public void SaveLanguage(string language)
+    {
+        if (language is not (Localization.LocalizationManager.Zh or Localization.LocalizationManager.En)) return;
+        _storage.SetSetting(KeyLanguage, language);
+        Settings.Language = language;
+    }
+
+    public void SaveSidebarPosition(string position)
+    {
+        if (position is not ("Left" or "Right")) return;
+        _storage.SetSetting(KeySidebar, position);
+        Settings.SidebarPosition = position;
+    }
+
+    public void MarkWelcomeShown()
+    {
+        _storage.SetSetting(KeyWelcomeShown, "1");
+        Settings.WelcomeShown = true;
+    }
+
+    public async Task<bool> TestConnectionAsync(string apiKey, string modelId, CancellationToken ct = default)
     {
         try
         {
+            var info = LlmCatalog.Find(modelId) ?? LlmCatalog.Default;
             var reply = await _api.ChatAsync(
                 new[] { new ChatApiMessage(ChatRole.User, "你好，请回复：连接成功") },
-                apiKey, model, ct);
+                apiKey, info.BaseUrl, info.Id, ct);
             return !string.IsNullOrWhiteSpace(reply);
         }
         catch (Exception)

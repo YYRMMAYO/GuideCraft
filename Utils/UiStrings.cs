@@ -1,53 +1,43 @@
+using GuideCraft.Localization;
+
 namespace GuideCraft;
 
-/// <summary>界面中文提示文案统一管理</summary>
+/// <summary>界面文案统一入口：走 LocalizationManager（运行时随语言切换）</summary>
 public static class UiStrings
 {
-    public const string NoApiKeyHint =
-        "还没有配置 API Key 哦 😊\n\n请点击右上角「⚙ 设置」→「获取 API Key」，按引导到 DeepSeek 开放平台申请你自己的 Key 并填入，即可开始引导式对话。";
+    public static string AppTitle => LocalizationManager.Get("Str.AppTitle");
 
-    public const string AppTitle = "GuideCraft · 引导式AI助手";
+    public static string NoApiKeyHint => LocalizationManager.Get("Str.Chat.NoApiKeyHint");
 
-    public const string NewConversation = "新对话";
+    public static string ApiKeyInvalid => LocalizationManager.Get("Str.Chat.ApiKeyInvalid");
 
-    public const string Settings = "设置";
+    public static string RateLimited => LocalizationManager.Get("Str.Chat.RateLimited");
 
-    public const string GetApiKey = "获取 API Key";
+    public static string ServerError => LocalizationManager.Get("Str.Chat.ServerError");
 
-    public const string TestConnection = "测试连接";
+    public static string NetworkError => LocalizationManager.Get("Str.Chat.NetworkError");
 
-    public const string Send = "发送";
+    public static string StreamTimeout => LocalizationManager.Get("Str.Chat.StreamTimeout");
 
-    public const string Stop = "停止";
+    public static string NeedPythonHint => LocalizationManager.Get("Str.Chat.NeedPythonHint");
 
-    public const string Copy = "复制";
+    public static string ConfirmGenerateHint => LocalizationManager.Get("Str.Chat.ConfirmGenerateHint");
 
-    public const string Copied = "已复制";
+    public static string StopGenerated => LocalizationManager.Get("Str.Chat.StopGenerated");
 
-    public const string ExportZip = "导出项目 ZIP";
+    public static string GeneratingStatus => LocalizationManager.Get("Str.Chat.GeneratingStatus");
 
-    public const string Exporting = "正在导出...";
+    public static string GeneratedHeader => LocalizationManager.Get("Str.Chat.GeneratedHeader");
 
-    public const string Thinking = "正在思考...";
+    public static string Deps => LocalizationManager.Get("Str.Chat.Deps");
 
-    public const string ApiKeyInvalid =
-        "API Key 无效或请求被拒绝（401）。请到设置中检查 Key 是否正确。";
+    public static string NoDeps => LocalizationManager.Get("Str.Chat.NoDeps");
 
-    public const string RateLimited =
-        "请求过于频繁（429），请稍候片刻再试。";
+    public static string IterateHint => LocalizationManager.Get("Str.Chat.IterateHint");
 
-    public const string ServerError =
-        "服务端暂时不可用（5xx），请稍后重试。";
+    public static string GenerateFailed => LocalizationManager.Get("Str.Chat.GenerateFailed");
 
-    public const string NetworkError =
-        "网络连接中断，请检查网络后重试。已生成的内容已为你保留。";
+    public static string ExportSuccess => LocalizationManager.Get("Str.ExportSuccess");
 
-    public const string StreamTimeout =
-        "等待响应超时，请重试。";
-
-    public const string NeedPythonHint =
-        "生成的代码需要本机安装 Python 环境及依赖后即可运行。\n运行方式：`pip install -r requirements.txt` 然后 `python main.py`";
-
-    public const string ConfirmGenerateHint =
-        "以上是需求摘要。如果没有问题，直接回复「确认」即可为你生成代码；如有遗漏或错误，请直接告诉我需要修改的地方。";
+    public static string ExportFailed => LocalizationManager.Get("Str.ExportFailed");
 }

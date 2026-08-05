@@ -6,10 +6,17 @@ public class UserSettings
     /// <summary>API Key（仅内存中存在明文，落盘为 DPAPI 密文）</summary>
     public string ApiKey { get; set; } = string.Empty;
 
-    public string PreferredModel { get; set; } = "deepseek-v4-flash";
+    /// <summary>偏好模型 ID（如 qwen-plus / deepseek-v4-flash）</summary>
+    public string PreferredModel { get; set; } = "qwen-plus";
 
     public string Theme { get; set; } = "Light";
 
-    /// <summary>系统提示词使用的中文引导语气</summary>
-    public bool ShowGuideHint { get; set; } = true;
+    /// <summary>界面语言（zh-CN / en-US）</summary>
+    public string Language { get; set; } = "zh-CN";
+
+    /// <summary>导航栏位置（Left / Right）</summary>
+    public string SidebarPosition { get; set; } = "Right";
+
+    /// <summary>是否已展示首次引导</summary>
+    public bool WelcomeShown { get; set; }
 }

@@ -7,45 +7,49 @@ using System.Text.Json;
 
 namespace GuideCraft.Services;
 
-/// <summary>DeepSeek API 客户端接口（OpenAI 兼容）</summary>
-public interface IDeepSeekApiClient
+/// <summary>大模型客户端接口（OpenAI 兼容：千问 / DeepSeek / 任意兼容端点）</summary>
+public interface ILlmClient
 {
     /// <summary>非流式对话，返回完整回复文本</summary>
     Task<string> ChatAsync(
         IReadOnlyList<ChatApiMessage> messages,
-        string? apiKey = null,
-        string? model = null,
+        string apiKey,
+        string baseUrl,
+        string model,
         CancellationToken ct = default);
 
     /// <summary>流式对话，增量文本通过 onDelta 回调输出</summary>
     Task StreamChatAsync(
         IReadOnlyList<ChatApiMessage> messages,
         Func<string, Task> onDelta,
-        string? apiKey = null,
-        string? model = null,
+        string apiKey,
+        string baseUrl,
+        string model,
         CancellationToken ct = default);
 }
 
-/// <summary>API 调用异常（含状态码，便于 UI 映射中文提示）</summary>
-public sealed class DeepSeekApiException : Exception
+/// <summary>API 调用异常（含状态码，便于 UI 映射本地化提示）</summary>
+public sealed class LlmApiException : Exception
 {
     public int StatusCode { get; }
 
-    public DeepSeekApiException(int statusCode, string message) : base(message)
+    public LlmApiException(int statusCode, string message) : base(message)
     {
         StatusCode = statusCode;
     }
 }
 
-/// <summary>DeepSeek API 客户端：HttpClient + System.Text.Json 直连，零第三方 AI SDK</summary>
-public sealed class DeepSeekApiClient : IDeepSeekApiClient
+/// <summary>
+/// OpenAI 兼容大模型客户端：HttpClient + System.Text.Json 直连，零第三方 AI SDK。
+/// 支持 SSE 流式解析（跳过 keep-alive、[DONE] 终止、容忍空 choices）。
+/// </summary>
+public sealed class LlmApiClient : ILlmClient
 {
-    private const string BaseUrl = "https://api.deepseek.com/chat/completions";
-    private const string DefaultModel = "deepseek-v4-flash";
+    private const string EndpointSuffix = "/chat/completions";
 
     private readonly HttpClient _http;
 
-    public DeepSeekApiClient(HttpClient http)
+    public LlmApiClient(HttpClient http)
     {
         _http = http;
         // 流式场景需要较长的整体超时（服务端排队等待可达数分钟）
@@ -54,8 +58,9 @@ public sealed class DeepSeekApiClient : IDeepSeekApiClient
 
     public async Task<string> ChatAsync(
         IReadOnlyList<ChatApiMessage> messages,
-        string? apiKey = null,
-        string? model = null,
+        string apiKey,
+        string baseUrl,
+        string model,
         CancellationToken ct = default)
     {
         var sb = new StringBuilder();
@@ -63,22 +68,26 @@ public sealed class DeepSeekApiClient : IDeepSeekApiClient
         {
             sb.Append(delta);
             return Task.CompletedTask;
-        }, apiKey, model, ct);
+        }, apiKey, baseUrl, model, ct);
         return sb.ToString();
     }
 
     public async Task StreamChatAsync(
         IReadOnlyList<ChatApiMessage> messages,
         Func<string, Task> onDelta,
-        string? apiKey = null,
-        string? model = null,
+        string apiKey,
+        string baseUrl,
+        string model,
         CancellationToken ct = default)
     {
         if (string.IsNullOrWhiteSpace(apiKey))
-            throw new DeepSeekApiException(401, "缺少 API Key");
+            throw new LlmApiException(401, "Missing API Key");
+        if (string.IsNullOrWhiteSpace(baseUrl) || string.IsNullOrWhiteSpace(model))
+            throw new LlmApiException(400, "Invalid base URL or model");
 
-        var payload = BuildPayload(messages, model ?? DefaultModel);
-        using var req = new HttpRequestMessage(HttpMethod.Post, BaseUrl);
+        var url = baseUrl.TrimEnd('/') + EndpointSuffix;
+        var payload = BuildPayload(messages, model);
+        using var req = new HttpRequestMessage(HttpMethod.Post, url);
         req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
         req.Content = new StringContent(
             JsonSerializer.Serialize(payload),
@@ -93,17 +102,17 @@ public sealed class DeepSeekApiClient : IDeepSeekApiClient
         }
         catch (TaskCanceledException) when (!ct.IsCancellationRequested)
         {
-            throw new DeepSeekApiException(408, "请求超时");
+            throw new LlmApiException(408, "Request timed out");
         }
         catch (HttpRequestException)
         {
-            throw new DeepSeekApiException(0, "网络错误");
+            throw new LlmApiException(0, "Network error");
         }
 
         using (resp)
         {
             if (!resp.IsSuccessStatusCode)
-                throw new DeepSeekApiException((int)resp.StatusCode, $"HTTP {(int)resp.StatusCode}");
+                throw new LlmApiException((int)resp.StatusCode, $"HTTP {(int)resp.StatusCode}");
 
             await using var stream = await resp.Content.ReadAsStreamAsync(ct);
             using var reader = new StreamReader(stream, Encoding.UTF8);
@@ -154,9 +163,7 @@ public sealed class DeepSeekApiClient : IDeepSeekApiClient
             model,
             messages = msgs,
             stream = true,
-            temperature = 0.7,
-            // v4 系列默认思考模式，引导对话不需要思考链，显式关闭以提速并避免 reasoning_content
-            thinking = new { type = "disabled" }
+            temperature = 0.7
         };
     }
 }

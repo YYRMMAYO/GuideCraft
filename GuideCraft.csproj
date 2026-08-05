@@ -9,9 +9,13 @@
     <InvariantGlobalization>false</InvariantGlobalization>
     <RootNamespace>GuideCraft</RootNamespace>
     <AssemblyName>GuideCraft</AssemblyName>
-    <Version>1.0.0</Version>
-    <Authors>GuideCraft</Authors>
-    <Description>引导式AI助手 - 通过多轮对话生成可运行的自动化方案</Description>
+    <Version>1.1.0</Version>
+    <AssemblyTitle>GuideCraft</AssemblyTitle>
+    <Product>GuideCraft · Guided AI Assistant</Product>
+    <Description>Guided AI Assistant · Turn vague ideas into runnable Python automation through Q&amp;A. Supports Qwen / DeepSeek / bilingual UI.</Description>
+    <Copyright>Copyright © 2026 YYRMMAYO</Copyright>
+    <NeutralLanguage>en-US</NeutralLanguage>
+    <ApplicationIcon>Assets\app.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>

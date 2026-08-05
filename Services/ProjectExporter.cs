@@ -44,9 +44,10 @@ public sealed class ProjectExporter : IProjectExporter
 
     private static string BuildReadme(string title, GeneratedCode code)
     {
-        var deps = (code.Dependencies ?? new List<string>()).Count == 0
+        var depsList = code.Dependencies ?? new List<string>();
+        var deps = depsList.Count == 0
             ? "（无第三方依赖）"
-            : string.Join("\n", code.Dependencies.Select(d => $"- {d}"));
+            : string.Join("\n", depsList.Select(d => $"- {d}"));
 
         return $"""
 # {title}

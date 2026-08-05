@@ -1,0 +1,94 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=System.Runtime">
+
+    <!-- ============ GuideCraft UI Strings (English) ============ -->
+    <sys:String x:Key="Str.AppTitle">GuideCraft · Guided AI Assistant</sys:String>
+    <sys:String x:Key="Str.AppSubtitle">Guided AI Assistant</sys:String>
+    <sys:String x:Key="Str.NewChat">＋ New Chat</sys:String>
+    <sys:String x:Key="Str.ApiKeyNotSet">API Key not configured</sys:String>
+    <sys:String x:Key="Str.ApiKeySet">API Key configured</sys:String>
+    <sys:String x:Key="Str.TooltipTheme">Toggle light/dark theme</sys:String>
+    <sys:String x:Key="Str.TooltipSettings">Settings</sys:String>
+    <sys:String x:Key="Str.InputTooltip">Enter to send, Shift+Enter for new line</sys:String>
+    <sys:String x:Key="Str.Send">Send ➤</sys:String>
+    <sys:String x:Key="Str.Stop">■ Stop</sys:String>
+    <sys:String x:Key="Str.ExportZip">📦 Export Project ZIP</sys:String>
+    <sys:String x:Key="Str.ExportHint">Download the complete project after generation (main.py + deps + README)</sys:String>
+    <sys:String x:Key="Str.ExportSuccess">Exported to:&#x0a;{path}</sys:String>
+    <sys:String x:Key="Str.ExportFailed">Export failed: {error}</sys:String>
+
+    <sys:String x:Key="Str.EmptyTitle">Welcome to GuideCraft</sys:String>
+    <sys:String x:Key="Str.EmptySubtitle">I will turn your vague idea into a runnable Python automation script through guided Q&amp;A.</sys:String>
+    <sys:String x:Key="Str.EmptyBeforeStart">Before you start</sys:String>
+    <sys:String x:Key="Str.EmptyBeforeStartHint">Click ⚙ Settings in the top-right corner, configure a model API Key, then start the guided conversation.</sys:String>
+    <sys:String x:Key="Str.EmptyExample1">· I want a script that auto-organizes my daily emails</sys:String>
+    <sys:String x:Key="Str.EmptyExample2">· Extract data from Excel and generate reports</sys:String>
+    <sys:String x:Key="Str.EmptyExample3">· Monitor a website price change and notify me</sys:String>
+
+    <sys:String x:Key="Str.SettingsTitle">Settings</sys:String>
+    <sys:String x:Key="Str.SettingsApiKeyTitle">🔑 API Key</sys:String>
+    <sys:String x:Key="Str.SettingsApiKeyGuide">Create an API Key on the platform (free tier is enough for daily use). Your Key is stored locally only (DPAPI encrypted) and never uploaded.</sys:String>
+    <sys:String x:Key="Str.SettingsApiKeyLabel">API Key</sys:String>
+    <sys:String x:Key="Str.SettingsTestConnection">Test Connection</sys:String>
+    <sys:String x:Key="Str.SettingsTesting">Testing...</sys:String>
+    <sys:String x:Key="Str.SettingsTestNoKey">Please enter an API Key first</sys:String>
+    <sys:String x:Key="Str.SettingsTestOk">✅ Connected, API Key is valid</sys:String>
+    <sys:String x:Key="Str.SettingsTestFail">❌ Connection failed, check your Key</sys:String>
+    <sys:String x:Key="Str.SettingsTestNetworkError">❌ Network error, try again later</sys:String>
+    <sys:String x:Key="Str.SettingsProvider">Model Provider</sys:String>
+    <sys:String x:Key="Str.SettingsModel">Model</sys:String>
+    <sys:String x:Key="Str.SettingsLanguage">语言 / Language</sys:String>
+    <sys:String x:Key="Str.SettingsTheme">Theme</sys:String>
+    <sys:String x:Key="Str.SettingsSidebar">Sidebar Position</sys:String>
+    <sys:String x:Key="Str.SettingsSidebarLeft">Left</sys:String>
+    <sys:String x:Key="Str.SettingsSidebarRight">Right</sys:String>
+    <sys:String x:Key="Str.SettingsSave">Save</sys:String>
+    <sys:String x:Key="Str.SettingsCancel">Cancel</sys:String>
+    <sys:String x:Key="Str.SettingsAbout">About</sys:String>
+    <sys:String x:Key="Str.SettingsVersion">Version</sys:String>
+    <sys:String x:Key="Str.SettingsCheckUpdate">Check for Updates</sys:String>
+    <sys:String x:Key="Str.SettingsCheckingUpdate">Checking...</sys:String>
+    <sys:String x:Key="Str.SettingsUpToDate">✅ You are up to date</sys:String>
+    <sys:String x:Key="Str.SettingsNewVersion">New version available: {version}</sys:String>
+    <sys:String x:Key="Str.SettingsOpenRelease">Go to Download</sys:String>
+    <sys:String x:Key="Str.SettingsUpdateFailed">Update check failed (network error)</sys:String>
+
+    <sys:String x:Key="Str.Chat.NoApiKeyHint">Please configure an API Key first: click ⚙ Settings in the top-right corner, get a Key from the platform and fill it in.</sys:String>
+    <sys:String x:Key="Str.Chat.ApiKeyInvalid">The API Key is invalid or expired. Update it in Settings.</sys:String>
+    <sys:String x:Key="Str.Chat.RateLimited">Too many requests (rate limited). Please try again later.</sys:String>
+    <sys:String x:Key="Str.Chat.ServerError">Service temporarily unavailable. Please try again later.</sys:String>
+    <sys:String x:Key="Str.Chat.NetworkError">Network connection error. Check your network and retry.</sys:String>
+    <sys:String x:Key="Str.Chat.StreamTimeout">Response timed out. Please try again later.</sys:String>
+    <sys:String x:Key="Str.Chat.ConfirmGenerateHint">✅ Requirements are clear. Reply "confirm" to generate the Python code, or add more details.</sys:String>
+    <sys:String x:Key="Str.Chat.StopGenerated">(Generation stopped)</sys:String>
+    <sys:String x:Key="Str.Chat.GeneratingStatus">✅ Received. Organizing requirements and generating code...</sys:String>
+    <sys:String x:Key="Str.Chat.GeneratedHeader">✅ Python script generated</sys:String>
+    <sys:String x:Key="Str.Chat.Deps">Dependencies</sys:String>
+    <sys:String x:Key="Str.Chat.NoDeps">(no third-party dependencies)</sys:String>
+    <sys:String x:Key="Str.Chat.IterateHint">Reply with modification requests and I will update the code; or click "📦 Export Project ZIP" to download the complete project</sys:String>
+    <sys:String x:Key="Str.Chat.NeedPythonHint">requires Python 3.8+ to run</sys:String>
+    <sys:String x:Key="Str.Chat.GenerateFailed">Generation failed</sys:String>
+
+    <sys:String x:Key="Str.Welcome.Title">Welcome to GuideCraft</sys:String>
+    <sys:String x:Key="Str.Welcome.Subtitle">Get started in 4 steps: turn your idea into a runnable automation script</sys:String>
+    <sys:String x:Key="Str.Welcome.Step1Title">Configure API Key</sys:String>
+    <sys:String x:Key="Str.Welcome.Step1Text">Click ⚙ Settings in the top-right corner and get a free Key from Alibaba Bailian (Qwen) or DeepSeek</sys:String>
+    <sys:String x:Key="Str.Welcome.Step2Title">Describe your idea</sys:String>
+    <sys:String x:Key="Str.Welcome.Step2Text">Tell me what you want to automate in one sentence. I will guide you to clarify details step by step</sys:String>
+    <sys:String x:Key="Str.Welcome.Step3Title">Confirm the summary</sys:String>
+    <sys:String x:Key="Str.Welcome.Step3Text">I generate a structured requirement document; after your confirmation, the Python code is written automatically</sys:String>
+    <sys:String x:Key="Str.Welcome.Step4Title">Export &amp; run</sys:String>
+    <sys:String x:Key="Str.Welcome.Step4Text">Export the project as a ZIP with one click, install dependencies, and run your automation script</sys:String>
+    <sys:String x:Key="Str.Welcome.Start">Get Started</sys:String>
+    <sys:String x:Key="Str.Welcome.Skip">Skip</sys:String>
+
+    <sys:String x:Key="Str.CodeBlock.Copy">📋 Copy</sys:String>
+    <sys:String x:Key="Str.CodeBlock.Copied">✓ Copied</sys:String>
+    <sys:String x:Key="Str.CodeBlock.CopyFailed">Copy failed</sys:String>
+
+    <sys:String x:Key="Str.Provider.Qwen">Qwen (Recommended · Free tier)</sys:String>
+    <sys:String x:Key="Str.Provider.DeepSeek">DeepSeek</sys:String>
+    <sys:String x:Key="Str.SettingsKeyHint.Qwen">Create a DashScope API Key at Alibaba Cloud Bailian console (free tier for new users)</sys:String>
+    <sys:String x:Key="Str.SettingsKeyHint.DeepSeek">Create an API Key at DeepSeek Open Platform (free tier is enough for daily use)</sys:String>
+</ResourceDictionary>

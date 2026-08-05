@@ -5,6 +5,7 @@
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="Localization/Strings.zh-CN.xaml" />
                 <ResourceDictionary Source="Themes/Colors.Light.xaml" />
                 <ResourceDictionary Source="Themes/Styles.xaml" />
             </ResourceDictionary.MergedDictionaries>
@@ -14,6 +15,8 @@
             <conv:InverseBoolConverter x:Key="InverseBoolConverter" />
             <conv:InverseBoolToVisibilityConverter x:Key="InverseBoolToVisibilityConverter" />
             <conv:TestTextConverter x:Key="TestTextConverter" />
+            <conv:ProviderNameConverter x:Key="ProviderNameConverter" />
+            <conv:BoolToColumnConverter x:Key="BoolToColumnConverter" />
         </ResourceDictionary>
     </Application.Resources>
 </Application>
