@@ -7,7 +7,7 @@ namespace GuideCraft.Converters;
 public class StringEqualsBoolConverter : IValueConverter
 {
     public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
-        => value is string s && parameter is string p && string.Equals(s, p, StringComparison.OrdinalIgnoreCase);
+        => value?.ToString() is { } s && parameter is string p && string.Equals(s, p, StringComparison.OrdinalIgnoreCase);
 
     public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
         => parameter as string ?? string.Empty;

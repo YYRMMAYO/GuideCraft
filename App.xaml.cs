@@ -55,11 +55,11 @@ public partial class App : Application
         window.Show();
 
 #if DEBUG
-        // 调试辅助：--settings 直接切到设置页
+        // 调试辅助：--settings 直接打开设置抽屉
         if (e.Args.Contains("--settings"))
         {
             var mainVm = _provider.GetRequiredService<ViewModels.MainViewModel>();
-            System.Windows.Threading.Dispatcher.CurrentDispatcher.BeginInvoke(() => mainVm.GoToSettingsCommand.Execute(null));
+            System.Windows.Threading.Dispatcher.CurrentDispatcher.BeginInvoke(() => mainVm.OpenSettingsCommand.Execute(null));
         }
 #endif
 #if DEBUG

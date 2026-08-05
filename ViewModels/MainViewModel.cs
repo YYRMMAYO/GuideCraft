@@ -12,14 +12,7 @@ using Microsoft.Win32;
 
 namespace GuideCraft.ViewModels;
 
-/// <summary>主界面页面</summary>
-public enum MainPage
-{
-    Chat,
-    Settings
-}
-
-/// <summary>主窗口视图模型：引导式对话状态机、页面切换、API 流式调用、缓存/费用显示</summary>
+/// <summary>主窗口视图模型：引导式对话状态机、设置抽屉、API 流式调用、缓存/费用显示</summary>
 public partial class MainViewModel : ObservableObject
 {
     private readonly IServiceProvider _services;
@@ -33,7 +26,6 @@ public partial class MainViewModel : ObservableObject
         _ui = Application.Current.Dispatcher;
         _messages = new ObservableCollection<ChatMessageViewModel>();
         _conversation = new Conversation();
-        _phase = ChatPhase.Idle;
         _conversations = new ObservableCollection<Conversation>();
         _selectedConversation = null;
         _messages.CollectionChanged += (_, _) => HasMessages = _messages.Count > 0;
@@ -49,38 +41,33 @@ public partial class MainViewModel : ObservableObject
         StartWelcomeLoop();
     }
 
-    // ---------- 页面切换 ----------
+    // ---------- 设置抽屉 ----------
 
+    /// <summary>设置抽屉是否打开（覆盖在对话上方，用完关闭）</summary>
     [ObservableProperty]
-    private MainPage _currentPage = MainPage.Chat;
+    private bool _isSettingsOpen;
 
-    public bool IsChatPage => CurrentPage == MainPage.Chat;
-    public bool IsSettingsPage => CurrentPage == MainPage.Settings;
-
-    partial void OnCurrentPageChanged(MainPage value)
-    {
-        OnPropertyChanged(nameof(IsChatPage));
-        OnPropertyChanged(nameof(IsSettingsPage));
-    }
+    /// <summary>设置抽屉宽度（可拖拽调整）</summary>
+    [ObservableProperty]
+    private System.Windows.GridLength _settingsWidth = new(480);
 
     [RelayCommand]
-    private void GoToChat() => CurrentPage = MainPage.Chat;
-
-    [RelayCommand]
-    private void GoToSettings()
+    private void OpenSettings()
     {
-        CurrentPage = MainPage.Settings;
+        IsSettingsOpen = true;
         RefreshLocalized();
     }
+
+    [RelayCommand]
+    private void CloseSettings() => IsSettingsOpen = false;
 
     // ---------- 布局与引导 ----------
 
     [ObservableProperty]
     private bool _isSidebarRight = true;
 
-    /// <summary>侧边栏宽度（GridSplitter 双向拖动，左右布局共用）</summary>
     [ObservableProperty]
-    private System.Windows.GridLength _sidebarWidth = new(240);
+    private System.Windows.GridLength _sidebarWidth = new(260);
 
     public bool IsLeftLayout => !IsSidebarRight;
     public bool IsRightLayout => IsSidebarRight;
@@ -204,16 +191,8 @@ public partial class MainViewModel : ObservableObject
     private ILocalStorageService _storage => _services.GetRequiredService<ILocalStorageService>();
     private IModelProfileService _profiles => _services.GetRequiredService<IModelProfileService>();
 
-    /// <summary>当前使用的模型配置（用户自定义，自由接入 API）</summary>
     public ModelProfile? CurrentProfile => _profiles.GetDefault();
 
-    /// <summary>测试连接时选择的目标配置</summary>
-    private ModelProfile? _testProfile;
-
-    /// <summary>由设置页选择并测试的配置</summary>
-    public void SetTestProfile(ModelProfile? profile) => _testProfile = profile;
-
-    /// <summary>设置页视图模型（模块化页面）</summary>
     public SettingsViewModel SettingsVm => _services.GetRequiredService<SettingsViewModel>();
 
     // ---------- 会话管理 ----------
@@ -318,6 +297,7 @@ public partial class MainViewModel : ObservableObject
         _cts?.Cancel();
     }
 
+    /// <summary>新建对话：清空当前 + 切回 Chat 页</summary>
     [RelayCommand]
     private void NewConversation()
     {
@@ -328,6 +308,8 @@ public partial class MainViewModel : ObservableObject
         Phase = ChatPhase.Idle;
         _lastGeneratedCode = null;
         OnPropertyChanged(nameof(CanExport));
+        // 新对话时收起设置抽屉，回到对话主界面
+        IsSettingsOpen = false;
     }
 
     [RelayCommand]
@@ -335,13 +317,6 @@ public partial class MainViewModel : ObservableObject
     {
         ThemeManager.Apply(ThemeManager.Current == ThemeManager.Light ? ThemeManager.Dark : ThemeManager.Light);
         _settings.SaveTheme(ThemeManager.Current);
-    }
-
-    [RelayCommand]
-    private void OpenSettings()
-    {
-        // 设置改为模块页面（不再是弹窗）
-        GoToSettings();
     }
 
     [RelayCommand]
@@ -387,7 +362,7 @@ public partial class MainViewModel : ObservableObject
 
         try
         {
-            var apiMessages = BuildApiMessages();
+            var apiMessages = await BuildApiMessagesWithSummaryAsync();
             await _api.StreamChatAsync(apiMessages, delta =>
                     _ui.InvokeAsync(() => assistant.AppendContent(delta)).Task,
                 apiKey,
@@ -397,7 +372,6 @@ public partial class MainViewModel : ObservableObject
                 usage => { lastUsage = usage; },
                 _cts.Token);
 
-            // 附加缓存命中率 + 预计费用（用户可见的透明用量信息）
             if (lastUsage is not null && profile is not null)
             {
                 var usageLine = BuildUsageLine(lastUsage, profile);
@@ -405,7 +379,6 @@ public partial class MainViewModel : ObservableObject
                     assistant.AppendContent($"\n\n---\n*{usageLine}*");
             }
 
-            // 流式完成后：Clarify → Confirm 自动切换
             if (Phase == ChatPhase.Clarify && _chat.IsRequirementSummary(assistant.Content))
             {
                 Phase = ChatPhase.Confirm;
@@ -433,12 +406,10 @@ public partial class MainViewModel : ObservableObject
         }
     }
 
-    /// <summary>缓存命中率 + 预计费用文本（本地化友好）</summary>
     private static string? BuildUsageLine(UsageInfo u, ModelProfile profile)
     {
         if (u.TotalTokens == 0 && u.CacheHitTokens == 0) return null;
 
-        // 费用估算（元）
         double cost = 0;
         if (profile.EnableCache)
         {
@@ -518,7 +489,6 @@ public partial class MainViewModel : ObservableObject
         }
     }
 
-    /// <summary>把用户配置转换为 LlmModelInfo（兼容摘要/代码生成服务）</summary>
     private static LlmModelInfo ToModelInfo(ModelProfile? profile)
     {
         if (profile is null) return LlmCatalog.Default;
@@ -548,30 +518,34 @@ public partial class MainViewModel : ObservableObject
         return string.IsNullOrWhiteSpace(name) ? "guidecraft-project" : name;
     }
 
-    // ---------- 辅助 ----------
-
     private void AddMessage(ChatRole role, string content)
     {
         Messages.Add(new ChatMessageViewModel(role, content));
     }
 
+    // ---------- 内核上下文承接（Agent 引导 + 缓存命中率优化） ----------
+
     /// <summary>
-    /// 构建 API 请求：System Prompt（稳定前缀，命中 DeepSeek/Qwen 上下文缓存）
-    /// + 截断的历史消息（按 token 估算保留最近，控制成本与上下文窗口）
+    /// 构建 API 请求消息：固定前缀 + 历史消息。
+    /// 关键优化点（v1.4.0）：
+    /// 1. System Prompt 字节级稳定 → DeepSeek/Qwen 上下文缓存最大化命中
+    /// 2. 历史消息超出 ~4000 估算 tokens 时，先用 LLM 摘要压缩为 200 字短摘要，
+    ///    摘要持久化在 _conversation.CompactedSummary → 始终作为 system prompt 一部分发送。
+    ///    这样系统 prompt 几乎不变（仅摘要变化），首条消息（用户最近）也稳定 → 高缓存命中
+    /// 3. 缓存命中率从 usage 读取实时显示给用户
     /// </summary>
-    private IReadOnlyList<ChatApiMessage> BuildApiMessages()
+    private async Task<IReadOnlyList<ChatApiMessage>> BuildApiMessagesWithSummaryAsync()
     {
         var sysPrompt = _chat.GetSystemPrompt(Phase);
-        var msgs = new List<ChatApiMessage>
-        {
-            new(ChatRole.System, sysPrompt)
-        };
+        var msgs = new List<ChatApiMessage> { new(ChatRole.System, sysPrompt) };
 
         // 排除最后一条（正在流式的 assistant 空消息）
         var history = Messages.Take(Messages.Count - 1).ToList();
+        if (history.Count == 0) return msgs;
 
-        // token 估算截断：保留最近的 ~6000 估算 tokens 历史（中文约 1 字 ≈ 1 token）
-        const int maxHistoryTokens = 6000;
+        const int maxHistoryTokens = 4000;  // 留足 system prompt + 输出的 token 余量
+        const int summarizeThreshold = 6000; // 历史超过此值触发摘要
+
         int acc = 0;
         var kept = new List<ChatMessageViewModel>();
         for (int i = history.Count - 1; i >= 0; i--)
@@ -583,9 +557,48 @@ public partial class MainViewModel : ObservableObject
             kept.Insert(0, m);
         }
 
+        // 总历史超阈值 → 用 LLM 压缩 + 缓存
+        int totalEst = history.Sum(m => m.Content.Length / 2);
+        if (totalEst > summarizeThreshold && Conversation.CompactedSummary is null)
+        {
+            try
+            {
+                var profile = CurrentProfile;
+                if (profile is not null)
+                {
+                    var compactPrompt = BuildCompactPrompt(history);
+                    var apiKey = _profiles.DecryptApiKey(profile);
+                    var summary = await _api.ChatAsync(
+                        new[] { new ChatApiMessage(ChatRole.System, "你是一个对话历史压缩助手，请用 100-200 字中文客观总结以下对话历史，保留关键需求和决定。"), new ChatApiMessage(ChatRole.User, compactPrompt) },
+                        apiKey, profile.BaseUrl, profile.ModelId);
+                    if (!string.IsNullOrWhiteSpace(summary))
+                    {
+                        Conversation.CompactedSummary = summary.Trim();
+                        // 不持久化到 DB（避免大文件），仅本会话有效
+                    }
+                }
+            }
+            catch { /* 摘要失败则降级为截断模式，不影响对话 */ }
+        }
+
+        // 若有摘要，注入到 system prompt 末尾（保持缓存前缀稳定）
+        if (!string.IsNullOrWhiteSpace(Conversation.CompactedSummary))
+        {
+            var compactSuffix = $"\n\n[对话历史摘要] {Conversation.CompactedSummary}";
+            msgs[0] = new ChatApiMessage(ChatRole.System, sysPrompt + compactSuffix);
+        }
+
         foreach (var m in kept)
             msgs.Add(new ChatApiMessage(m.Role, m.Content));
 
         return msgs;
+    }
+
+    private static string BuildCompactPrompt(List<ChatMessageViewModel> history)
+    {
+        var sb = new System.Text.StringBuilder();
+        foreach (var m in history)
+            sb.AppendLine($"[{m.Role}] {m.Content}");
+        return sb.ToString();
     }
 }

@@ -47,95 +47,119 @@
             </Grid>
         </Border>
 
-        <!-- ===================== 主体：左右双布局（侧边栏可拖拽） ===================== -->
+        <!-- ===================== 主体：对话为主 + 侧边栏（可拖拽） ===================== -->
         <Grid Grid.Row="1">
 
-            <!-- ========== 布局 A：侧边栏在左 ========== -->
-            <Grid Visibility="{Binding IsLeftLayout, Converter={StaticResource BoolToVisibilityConverter}}">
+            <!-- 布局 A：侧边栏在左 -->
+            <Grid Visibility="{Binding IsLeftLayout, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="{Binding SidebarWidth, Mode=TwoWay}" MinWidth="190" MaxWidth="400" />
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
-
                 <views:SidebarPanel Grid.Column="0" />
-                <GridSplitter Grid.Column="1" Width="4"
-                              HorizontalAlignment="Stretch"
-                              ResizeBehavior="PreviousAndNext"
-                              Background="Transparent" />
+                <GridSplitter Grid.Column="1" Width="4" HorizontalAlignment="Stretch"
+                              ResizeBehavior="PreviousAndNext" Background="Transparent" />
                 <views:ContentHost Grid.Column="2" />
             </Grid>
 
-            <!-- ========== 布局 B：侧边栏在右（默认） ========== -->
-            <Grid Visibility="{Binding IsRightLayout, Converter={StaticResource BoolToVisibilityConverter}}">
+            <!-- 布局 B：侧边栏在右（默认） -->
+            <Grid Visibility="{Binding IsRightLayout, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="{Binding SidebarWidth, Mode=TwoWay}" MinWidth="190" MaxWidth="400" />
                 </Grid.ColumnDefinitions>
-
                 <views:ContentHost Grid.Column="0" />
-                <GridSplitter Grid.Column="1" Width="4"
-                              HorizontalAlignment="Stretch"
-                              ResizeBehavior="PreviousAndNext"
-                              Background="Transparent" />
+                <GridSplitter Grid.Column="1" Width="4" HorizontalAlignment="Stretch"
+                              ResizeBehavior="PreviousAndNext" Background="Transparent" />
                 <views:SidebarPanel Grid.Column="2" />
             </Grid>
         </Grid>
 
-        <!-- ===================== 首次引导教程（覆盖层） ===================== -->
-        <Border x:Name="WelcomeOverlay" Grid.RowSpan="2"
-                Background="{DynamicResource OverlayBrush}"
-                Visibility="{Binding IsWelcomeVisible, Converter={StaticResource BoolToVisibilityConverter}}">
-            <Grid>
-                <Border x:Name="WelcomeCard"
-                        Background="{DynamicResource CardBackgroundBrush}"
-                        BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
-                        CornerRadius="20" Width="540" Padding="44,40"
-                        VerticalAlignment="Center" HorizontalAlignment="Center"
-                        RenderTransformOrigin="0.5,0.5">
-                    <Border.RenderTransform>
-                        <TransformGroup>
-                            <ScaleTransform x:Name="WelcomeCardScale" ScaleX="1" ScaleY="1" />
-                            <TranslateTransform x:Name="WelcomeCardTranslate" Y="0" />
-                        </TransformGroup>
-                    </Border.RenderTransform>
-                    <StackPanel>
-                        <TextBlock x:Name="WelcomeIconText" Text="{Binding CurrentStepIcon}"
-                                   FontSize="56" HorizontalAlignment="Center" />
-                        <TextBlock x:Name="WelcomeTitleText" Text="{Binding CurrentStepTitle}"
-                                   FontSize="22" FontWeight="Bold"
-                                   Foreground="{DynamicResource PrimaryTextBrush}"
-                                   HorizontalAlignment="Center" Margin="0,16,0,8" />
-                        <TextBlock x:Name="WelcomeBodyText" Text="{Binding CurrentStepText}"
-                                   FontSize="14" Foreground="{DynamicResource SecondaryTextBrush}"
-                                   TextWrapping="Wrap" TextAlignment="Center" LineHeight="24" />
+        <!-- ===================== 设置抽屉（覆盖层，用完关闭，对话始终为主） ===================== -->
+        <Grid x:Name="SettingsOverlay" Grid.RowSpan="2"
+              Visibility="{Binding IsSettingsOpen, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
+            <!-- 遮罩：点击关闭 -->
+            <Border Background="{DynamicResource OverlayBrush}" MouseLeftButtonDown="Overlay_OnMouseLeftButtonDown" />
 
-                        <StackPanel x:Name="DotsPanel" Orientation="Horizontal"
-                                    HorizontalAlignment="Center" Margin="0,22,0,0">
-                            <Ellipse x:Name="Dot0" Width="8" Height="8" Margin="0,0,7,0"
-                                     Fill="{DynamicResource AccentBrush}" />
-                            <Ellipse x:Name="Dot1" Width="8" Height="8" Margin="0,0,7,0"
-                                     Fill="{DynamicResource SecondaryTextBrush}" />
-                            <Ellipse x:Name="Dot2" Width="8" Height="8" Margin="0,0,7,0"
-                                     Fill="{DynamicResource SecondaryTextBrush}" />
-                            <Ellipse x:Name="Dot3" Width="8" Height="8"
-                                     Fill="{DynamicResource SecondaryTextBrush}" />
-                        </StackPanel>
-
-                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,26,0,0">
-                            <Button Style="{StaticResource SecondaryButtonStyle}"
-                                    Content="{DynamicResource Str.Welcome.Skip}"
-                                    Command="{Binding CloseWelcomeCommand}"
-                                    Width="96" Margin="0,0,10,0" />
-                            <Button Style="{StaticResource PrimaryButtonStyle}"
-                                    Content="{DynamicResource Str.Welcome.Start}"
-                                    Command="{Binding CloseWelcomeCommand}"
-                                    Width="128" />
-                        </StackPanel>
-                    </StackPanel>
+            <!-- 右侧抽屉面板（可拖拽宽度） -->
+            <Grid HorizontalAlignment="Right" RenderTransformOrigin="0.5,0.5">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="{Binding SettingsWidth, Mode=TwoWay}" MinWidth="380" MaxWidth="640" />
+                </Grid.ColumnDefinitions>
+                <GridSplitter Grid.Column="0" Width="4" HorizontalAlignment="Stretch"
+                              ResizeBehavior="PreviousAndNext" Background="Transparent" />
+                <Border Grid.Column="1" Background="{DynamicResource WindowBackgroundBrush}"
+                        BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1,0,0,0">
+                    <DockPanel>
+                        <!-- 抽屉头部 -->
+                        <Border DockPanel.Dock="Top" Background="{DynamicResource HeaderBackgroundBrush}"
+                                BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1"
+                                Padding="20,14">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="设置" FontSize="17" FontWeight="Bold"
+                                           Foreground="{DynamicResource PrimaryTextBrush}" />
+                                <Button Grid.Column="1" Style="{StaticResource IconButtonStyle}" Content="✕"
+                                        Command="{Binding CloseSettingsCommand}"
+                                        ToolTip="关闭设置 (Esc)" />
+                            </Grid>
+                        </Border>
+                        <!-- 设置内容（Tab 分类） -->
+                        <views:SettingsPanel />
+                    </DockPanel>
                 </Border>
             </Grid>
-        </Border>
+        </Grid>
+
+        <!-- ===================== 首次引导教程（覆盖层 + 关闭按钮可点） ===================== -->
+        <Grid x:Name="WelcomeOverlay" Grid.RowSpan="2"
+              Visibility="{Binding IsWelcomeVisible, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
+            <Border Background="{DynamicResource OverlayBrush}" />
+            <Border x:Name="WelcomeCard"
+                    Background="{DynamicResource CardBackgroundBrush}"
+                    BorderBrush="{DynamicResource AccentBrush}" BorderThickness="1"
+                    CornerRadius="20" Width="520" Padding="44,40"
+                    VerticalAlignment="Center" HorizontalAlignment="Center"
+                    IsHitTestVisible="True">
+                <StackPanel>
+                    <TextBlock x:Name="WelcomeIconText" Text="{Binding CurrentStepIcon}"
+                               FontSize="56" HorizontalAlignment="Center" />
+                    <TextBlock x:Name="WelcomeTitleText" Text="{Binding CurrentStepTitle}"
+                               FontSize="22" FontWeight="Bold"
+                               Foreground="{DynamicResource PrimaryTextBrush}"
+                               HorizontalAlignment="Center" Margin="0,16,0,8" />
+                    <TextBlock x:Name="WelcomeBodyText" Text="{Binding CurrentStepText}"
+                               FontSize="14" Foreground="{DynamicResource SecondaryTextBrush}"
+                               TextWrapping="Wrap" TextAlignment="Center" LineHeight="24" />
+                    <StackPanel x:Name="DotsPanel" Orientation="Horizontal"
+                                HorizontalAlignment="Center" Margin="0,22,0,0">
+                        <Ellipse x:Name="Dot0" Width="8" Height="8" Margin="0,0,7,0"
+                                 Fill="{DynamicResource AccentBrush}" />
+                        <Ellipse x:Name="Dot1" Width="8" Height="8" Margin="0,0,7,0"
+                                 Fill="{DynamicResource SecondaryTextBrush}" />
+                        <Ellipse x:Name="Dot2" Width="8" Height="8" Margin="0,0,7,0"
+                                 Fill="{DynamicResource SecondaryTextBrush}" />
+                        <Ellipse x:Name="Dot3" Width="8" Height="8"
+                                 Fill="{DynamicResource SecondaryTextBrush}" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,26,0,0">
+                        <Button Style="{StaticResource SecondaryButtonStyle}"
+                                Content="{DynamicResource Str.Welcome.Skip}"
+                                Command="{Binding CloseWelcomeCommand}"
+                                Width="100" Margin="0,0,10,0" />
+                        <Button Style="{StaticResource PrimaryButtonStyle}"
+                                Content="{DynamicResource Str.Welcome.Start}"
+                                Command="{Binding CloseWelcomeCommand}"
+                                Width="128" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Grid>
     </Grid>
 </Window>

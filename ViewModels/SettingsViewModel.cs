@@ -8,6 +8,16 @@ using GuideCraft.Services;
 
 namespace GuideCraft.ViewModels;
 
+/// <summary>设置抽屉 Tab 分类</summary>
+public enum SettingsTab
+{
+    Models,      // 模型配置
+    Appearance,  // 外观
+    Language,    // 语言
+    Layout,      // 布局
+    About        // 关于更新
+}
+
 /// <summary>
 /// 设置页视图模型（模块化页面，非弹窗）：自定义模型配置 CRUD、语言/主题/导航栏位置、更新检查。
 /// 所有偏好即时保存，无需"保存"按钮。
@@ -29,6 +39,14 @@ public partial class SettingsViewModel : ObservableObject
         _selectedSidebar = settings.Settings.SidebarPosition;
         RefreshProfiles();
     }
+
+    // ---------- Tab 切换 ----------
+
+    [ObservableProperty]
+    private SettingsTab _activeTab;
+
+    [RelayCommand]
+    private void SwitchTab(SettingsTab tab) => ActiveTab = tab;
 
     // ---------- 模型配置管理 ----------
 
