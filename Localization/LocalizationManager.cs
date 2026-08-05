@@ -84,6 +84,8 @@ public static class LocalizationManager
         ["Str.SettingsModel"] = "模型",
         ["Str.SettingsLanguage"] = "语言 / Language",
         ["Str.SettingsTheme"] = "界面主题",
+        ["Str.SettingsThemeLight"] = "浅色",
+        ["Str.SettingsThemeDark"] = "深色",
         ["Str.SettingsSidebar"] = "导航栏位置",
         ["Str.SettingsSidebarLeft"] = "左侧",
         ["Str.SettingsSidebarRight"] = "右侧",

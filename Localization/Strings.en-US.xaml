@@ -40,6 +40,8 @@
     <sys:String x:Key="Str.SettingsModel">Model</sys:String>
     <sys:String x:Key="Str.SettingsLanguage">语言 / Language</sys:String>
     <sys:String x:Key="Str.SettingsTheme">Theme</sys:String>
+    <sys:String x:Key="Str.SettingsThemeLight">Light</sys:String>
+    <sys:String x:Key="Str.SettingsThemeDark">Dark</sys:String>
     <sys:String x:Key="Str.SettingsSidebar">Sidebar Position</sys:String>
     <sys:String x:Key="Str.SettingsSidebarLeft">Left</sys:String>
     <sys:String x:Key="Str.SettingsSidebarRight">Right</sys:String>

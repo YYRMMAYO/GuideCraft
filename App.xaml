@@ -17,6 +17,8 @@
             <conv:TestTextConverter x:Key="TestTextConverter" />
             <conv:ProviderNameConverter x:Key="ProviderNameConverter" />
             <conv:BoolToColumnConverter x:Key="BoolToColumnConverter" />
+            <conv:LocalizedTextConverter x:Key="LocalizedTextConverter" />
+            <conv:StringEqualsBoolConverter x:Key="StringEqualsBoolConverter" />
         </ResourceDictionary>
     </Application.Resources>
 </Application>

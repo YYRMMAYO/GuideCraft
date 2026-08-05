@@ -5,36 +5,27 @@ using Microsoft.Data.Sqlite;
 
 namespace GuideCraft.Services;
 
-/// <summary>SQLite 本地存储：会话、消息、产物、设置</summary>
+/// <summary>SQLite 本地存储：会话、消息、产物、设置（敏感字段经 CryptoService AES-GCM 加密）</summary>
 public interface ILocalStorageService
 {
-    /// <summary>获取所有会话摘要（按更新时间倒序）</summary>
     List<Conversation> GetConversations();
-
-    /// <summary>按 Id 加载完整会话（含消息与产物）</summary>
     Conversation? GetConversation(string id);
-
-    /// <summary>保存会话（upsert 会话、重建消息、更新产物）</summary>
     void SaveConversation(Conversation conversation);
-
-    /// <summary>删除会话</summary>
     void DeleteConversation(string id);
-
-    /// <summary>读取设置项</summary>
     string? GetSetting(string key);
-
-    /// <summary>写入设置项</summary>
     void SetSetting(string key, string value);
 }
 
-/// <summary>SQLite 实现。数据库文件位于 %AppData%\GuideCraft\guidecraft.db</summary>
+/// <summary>SQLite 实现：敏感字段（标题/消息内容/代码/描述/需求文档）经 AES-GCM 字段级加密落盘</summary>
 public sealed class LocalStorageService : ILocalStorageService
 {
     private readonly string _dbPath;
     private readonly string _connectionString;
+    private readonly ICryptoService _crypto;
 
-    public LocalStorageService()
+    public LocalStorageService(ICryptoService crypto)
     {
+        _crypto = crypto;
         var dir = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
             "GuideCraft");
@@ -86,8 +77,12 @@ public sealed class LocalStorageService : ILocalStorageService
         return c;
     }
 
+    private string Enc(string? plain) => string.IsNullOrEmpty(plain) ? string.Empty : _crypto.Encrypt(plain) ?? string.Empty;
+    private string Dec(string cipher) => _crypto.Decrypt(cipher);
+
     private static string Ts(DateTime t) => t.ToString("O");
-    private static DateTime ParseTs(string s) => DateTime.TryParse(s, null, System.Globalization.DateTimeStyles.RoundtripKind, out var v) ? v : DateTime.Now;
+    private static DateTime ParseTs(string s) =>
+        DateTime.TryParse(s, null, System.Globalization.DateTimeStyles.RoundtripKind, out var v) ? v : DateTime.Now;
 
     public List<Conversation> GetConversations()
     {
@@ -101,7 +96,7 @@ public sealed class LocalStorageService : ILocalStorageService
             list.Add(new Conversation
             {
                 Id = reader.GetString(0),
-                Title = reader.GetString(1),
+                Title = Dec(reader.GetString(1)),
                 CreatedAt = ParseTs(reader.GetString(2)),
                 UpdatedAt = ParseTs(reader.GetString(3))
             });
@@ -112,9 +107,8 @@ public sealed class LocalStorageService : ILocalStorageService
     public Conversation? GetConversation(string id)
     {
         using var conn = Open();
-
-        // 会话头
         Conversation? conv = null;
+
         using (var cmd = conn.CreateCommand())
         {
             cmd.CommandText = "SELECT id, title, created_at, updated_at FROM conversations WHERE id = $id";
@@ -125,7 +119,7 @@ public sealed class LocalStorageService : ILocalStorageService
                 conv = new Conversation
                 {
                     Id = reader.GetString(0),
-                    Title = reader.GetString(1),
+                    Title = Dec(reader.GetString(1)),
                     CreatedAt = ParseTs(reader.GetString(2)),
                     UpdatedAt = ParseTs(reader.GetString(3))
                 };
@@ -133,7 +127,6 @@ public sealed class LocalStorageService : ILocalStorageService
         }
         if (conv is null) return null;
 
-        // 消息
         using (var cmd = conn.CreateCommand())
         {
             cmd.CommandText = "SELECT role, content, timestamp FROM messages WHERE conversation_id = $id ORDER BY id ASC";
@@ -145,13 +138,12 @@ public sealed class LocalStorageService : ILocalStorageService
                 {
                     ConversationId = id,
                     Role = Enum.TryParse<ChatRole>(reader.GetString(0), out var role) ? role : ChatRole.User,
-                    Content = reader.GetString(1),
+                    Content = Dec(reader.GetString(1)),
                     Timestamp = ParseTs(reader.GetString(2))
                 });
             }
         }
 
-        // 产物
         using (var cmd = conn.CreateCommand())
         {
             cmd.CommandText = "SELECT type, code, description, dependencies, requirement_document FROM projects WHERE conversation_id = $id";
@@ -162,10 +154,10 @@ public sealed class LocalStorageService : ILocalStorageService
                 conv.GeneratedProject = new GeneratedProject
                 {
                     Type = Enum.TryParse<ProjectType>(reader.GetString(0), out var t) ? t : ProjectType.PythonScript,
-                    Code = reader.GetString(1),
-                    Description = reader.GetString(2),
-                    Dependencies = JsonSerializer.Deserialize<List<string>>(reader.GetString(3)) ?? new List<string>(),
-                    RequirementDocument = reader.GetString(4)
+                    Code = Dec(reader.GetString(1)),
+                    Description = Dec(reader.GetString(2)),
+                    Dependencies = JsonSerializer.Deserialize<List<string>>(Dec(reader.GetString(3))) ?? new List<string>(),
+                    RequirementDocument = Dec(reader.GetString(4))
                 };
             }
         }
@@ -179,7 +171,6 @@ public sealed class LocalStorageService : ILocalStorageService
         using var conn = Open();
         using var tx = conn.BeginTransaction();
 
-        // 会话头 upsert
         using (var cmd = conn.CreateCommand())
         {
             cmd.Transaction = tx;
@@ -188,13 +179,12 @@ public sealed class LocalStorageService : ILocalStorageService
                 ON CONFLICT(id) DO UPDATE SET title = $title, updated_at = $updated
                 """;
             cmd.Parameters.AddWithValue("$id", conversation.Id);
-            cmd.Parameters.AddWithValue("$title", conversation.Title);
+            cmd.Parameters.AddWithValue("$title", Enc(conversation.Title));
             cmd.Parameters.AddWithValue("$created", Ts(conversation.CreatedAt));
             cmd.Parameters.AddWithValue("$updated", Ts(conversation.UpdatedAt));
             cmd.ExecuteNonQuery();
         }
 
-        // 消息全量重建
         using (var cmd = conn.CreateCommand())
         {
             cmd.Transaction = tx;
@@ -209,12 +199,11 @@ public sealed class LocalStorageService : ILocalStorageService
             cmd.CommandText = "INSERT INTO messages (conversation_id, role, content, timestamp) VALUES ($cid, $role, $content, $ts)";
             cmd.Parameters.AddWithValue("$cid", conversation.Id);
             cmd.Parameters.AddWithValue("$role", m.Role.ToString());
-            cmd.Parameters.AddWithValue("$content", m.Content);
+            cmd.Parameters.AddWithValue("$content", Enc(m.Content));
             cmd.Parameters.AddWithValue("$ts", Ts(m.Timestamp));
             cmd.ExecuteNonQuery();
         }
 
-        // 产物 upsert
         if (conversation.GeneratedProject is { } p)
         {
             using var cmd = conn.CreateCommand();
@@ -227,10 +216,10 @@ public sealed class LocalStorageService : ILocalStorageService
                 """;
             cmd.Parameters.AddWithValue("$id", conversation.Id);
             cmd.Parameters.AddWithValue("$type", p.Type.ToString());
-            cmd.Parameters.AddWithValue("$code", p.Code);
-            cmd.Parameters.AddWithValue("$desc", p.Description);
-            cmd.Parameters.AddWithValue("$deps", JsonSerializer.Serialize(p.Dependencies));
-            cmd.Parameters.AddWithValue("$req", p.RequirementDocument);
+            cmd.Parameters.AddWithValue("$code", Enc(p.Code));
+            cmd.Parameters.AddWithValue("$desc", Enc(p.Description));
+            cmd.Parameters.AddWithValue("$deps", Enc(JsonSerializer.Serialize(p.Dependencies)));
+            cmd.Parameters.AddWithValue("$req", Enc(p.RequirementDocument));
             cmd.ExecuteNonQuery();
         }
 
@@ -263,8 +252,7 @@ public sealed class LocalStorageService : ILocalStorageService
         using var cmd = conn.CreateCommand();
         cmd.CommandText = "SELECT value FROM settings WHERE key = $key";
         cmd.Parameters.AddWithValue("$key", key);
-        var result = cmd.ExecuteScalar();
-        return result as string;
+        return cmd.ExecuteScalar() as string;
     }
 
     public void SetSetting(string key, string value)

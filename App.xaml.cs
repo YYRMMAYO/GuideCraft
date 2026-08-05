@@ -25,6 +25,7 @@ public partial class App : Application
         services.AddSingleton<HttpClient>();
         services.AddSingleton<ILlmClient, LlmApiClient>();
         services.AddSingleton<ILocalStorageService, LocalStorageService>();
+        services.AddSingleton<ICryptoService, CryptoService>();
         services.AddSingleton<ISettingsService, SettingsService>();
         services.AddSingleton<IChatService, ChatService>();
         services.AddSingleton<IRequirementSummarizer, RequirementSummarizer>();
@@ -51,7 +52,6 @@ public partial class App : Application
         vm.LoadConversations();
 
         window.Show();
-
 #if DEBUG
         // 调试期：模拟一个已生成产物的会话，验证 UI 完整状态（命令行 --no-demo 跳过）
         var isDemo = !e.Args.Contains("--no-demo");
