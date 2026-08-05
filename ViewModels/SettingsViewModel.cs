@@ -1,125 +1,194 @@
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using GuideCraft.Localization;
+using GuideCraft.Models;
 using GuideCraft.Services;
 
 namespace GuideCraft.ViewModels;
 
-/// <summary>设置窗口视图模型：API Key 引导、模型提供方/模型、语言、主题、导航栏位置、检查更新</summary>
+/// <summary>
+/// 设置页视图模型（模块化页面，非弹窗）：自定义模型配置 CRUD、语言/主题/导航栏位置、更新检查。
+/// 所有偏好即时保存，无需"保存"按钮。
+/// </summary>
 public partial class SettingsViewModel : ObservableObject
 {
     private readonly ISettingsService _settings;
+    private readonly IModelProfileService _profiles;
     private readonly IUpdateChecker _updateChecker;
 
-    public SettingsViewModel(ISettingsService settings, IUpdateChecker updateChecker)
+    public SettingsViewModel(ISettingsService settings, IModelProfileService profiles, IUpdateChecker updateChecker)
     {
         _settings = settings;
+        _profiles = profiles;
         _updateChecker = updateChecker;
-        _apiKey = settings.Settings.ApiKey;
-        _selectedModel = settings.Settings.PreferredModel;
-        _selectedTheme = settings.Settings.Theme;
+
         _selectedLanguage = settings.Settings.Language;
+        _selectedTheme = settings.Settings.Theme;
         _selectedSidebar = settings.Settings.SidebarPosition;
-
-        var modelInfo = LlmCatalog.Find(_selectedModel);
-        _selectedProvider = modelInfo?.Provider ?? LlmProvider.Qwen;
-        _keyHintText = ProviderKeyHint(_selectedProvider);
-        _apiKeyPageLabel = _selectedProvider == LlmProvider.Qwen ? "阿里云百炼" : "DeepSeek";
-        RefreshModels();
+        RefreshProfiles();
     }
 
-    // ---------- 提供方 / 模型 ----------
+    // ---------- 模型配置管理 ----------
 
     [ObservableProperty]
-    private LlmProvider _selectedProvider;
+    private ObservableCollection<ModelProfile> _profilesList = new();
 
     [ObservableProperty]
-    private string _selectedModel;
+    private ModelProfile? _selectedProfile;
+
+    // 编辑表单字段
+    [ObservableProperty]
+    private string _editName = string.Empty;
 
     [ObservableProperty]
-    private IReadOnlyList<LlmModelInfo> _models = new List<LlmModelInfo>();
+    private string _editProvider = "Qwen";
 
-    /// <summary>当前提供方 Key 获取提示（本地化）</summary>
     [ObservableProperty]
-    private string _keyHintText = string.Empty;
+    private string _editBaseUrl = "https://dashscope.aliyuncs.com/compatible-mode/v1";
 
-    /// <summary>申请页按钮文案（本地化）</summary>
     [ObservableProperty]
-    private string _apiKeyPageLabel = string.Empty;
+    private string _editModelId = "qwen-plus";
 
-    /// <summary>支持的提供方（千问优先）</summary>
-    public IReadOnlyList<LlmProvider> Providers => LlmCatalog.Providers;
+    [ObservableProperty]
+    private string _editApiKey = string.Empty;
 
-    /// <summary>提供方显示名（本地化）</summary>
-    public static string ProviderName(LlmProvider p) => LocalizationManager.Get(LlmCatalog.ProviderNameKey(p));
+    [ObservableProperty]
+    private bool _editIsDefault;
 
-    /// <summary>提供方 Key 获取提示（本地化）</summary>
-    public static string ProviderKeyHint(LlmProvider p) => LocalizationManager.Get(LlmCatalog.ProviderKeyHintKey(p));
+    [ObservableProperty]
+    private bool _editEnableCache = true;
 
-    /// <summary>提供方变化 → 刷新模型列表并选择该组首个模型</summary>
-    partial void OnSelectedProviderChanged(LlmProvider value)
+    [ObservableProperty]
+    private string _editNote = string.Empty;
+
+    /// <summary>编辑表单可见（新增/编辑时显示）</summary>
+    [ObservableProperty]
+    private bool _isEditing;
+
+    /// <summary>可用的提供方预设（新增时选择）</summary>
+    public IReadOnlyList<string> ProviderPresets { get; } = new[] { "Qwen", "DeepSeek", "Custom" };
+
+    /// <summary>模型预设提示（随提供方变化）</summary>
+    public string ModelPresetHint => EditProvider switch
     {
-        RefreshModels();
-        KeyHintText = ProviderKeyHint(value);
-        ApiKeyPageLabel = value == LlmProvider.Qwen
-            ? "阿里云百炼"
-            : "DeepSeek";
-        if (Models.Count > 0)
-        {
-            SelectedModel = Models[0].Id;
-        }
-    }
+        "Qwen" => "如 qwen-plus / qwen-turbo / qwen-max / qwen-flash",
+        "DeepSeek" => "如 deepseek-v4-flash / deepseek-v4-pro",
+        _ => "任意 OpenAI 兼容模型 ID"
+    };
 
-    partial void OnSelectedModelChanged(string value)
+    partial void OnEditProviderChanged(string value)
     {
-        // 模型变化时同步提供方（如用户在模型下拉直接切换）
-        var info = LlmCatalog.Find(value);
-        if (info is not null && info.Provider != SelectedProvider)
-        {
-            SelectedProvider = info.Provider;
-        }
+        if (value == "Qwen") EditBaseUrl = "https://dashscope.aliyuncs.com/compatible-mode/v1";
+        else if (value == "DeepSeek") EditBaseUrl = "https://api.deepseek.com";
+        else EditBaseUrl = "https://";
+        OnPropertyChanged(nameof(ModelPresetHint));
     }
 
-    private void RefreshModels()
+    partial void OnSelectedProfileChanged(ModelProfile? value)
     {
-        Models = LlmCatalog.ByProvider(SelectedProvider);
-        OnPropertyChanged(nameof(Models));
+        if (value is null) return;
+        EditName = value.Name;
+        EditProvider = value.Provider.ToString();
+        EditBaseUrl = value.BaseUrl;
+        EditModelId = value.ModelId;
+        EditApiKey = string.Empty; // 不显示已存 Key，留空表示保留
+        EditIsDefault = value.IsDefault;
+        EditEnableCache = value.EnableCache;
+        EditNote = value.Note;
+        OnPropertyChanged(nameof(ModelPresetHint));
     }
 
-    // ---------- API Key ----------
-
-    [ObservableProperty]
-    private string _apiKey;
-
-    [ObservableProperty]
-    private bool _hasApiKey;
-
-    [ObservableProperty]
-    private bool _isTesting;
-
-    [ObservableProperty]
-    private string _testResult = string.Empty;
-
-    partial void OnApiKeyChanged(string value)
+    private void RefreshProfiles()
     {
-        HasApiKey = !string.IsNullOrWhiteSpace(value);
+        ProfilesList = new ObservableCollection<ModelProfile>(_profiles.GetAll());
+        OnPropertyChanged(nameof(ProfilesList));
+        SelectedProfile = ProfilesList.FirstOrDefault();
     }
 
-    /// <summary>打开当前提供方申请页</summary>
+    /// <summary>新增配置</summary>
     [RelayCommand]
-    private void OpenApiKeyPage()
+    private void NewProfile()
     {
-        var info = LlmCatalog.Find(SelectedModel);
-        var url = info?.KeyUrl ?? LlmCatalog.Default.KeyUrl;
-        Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
+        SelectedProfile = null;
+        EditName = "新配置";
+        EditProvider = "Qwen";
+        EditBaseUrl = "https://dashscope.aliyuncs.com/compatible-mode/v1";
+        EditModelId = "qwen-plus";
+        EditApiKey = string.Empty;
+        EditIsDefault = ProfilesList.Count == 0;
+        EditEnableCache = true;
+        EditNote = string.Empty;
+        IsEditing = true;
     }
 
-    /// <summary>测试 API Key 是否可用</summary>
+    /// <summary>编辑选中配置</summary>
     [RelayCommand]
-    private async Task TestConnectionAsync()
+    private void EditProfile() => IsEditing = SelectedProfile is not null;
+
+    /// <summary>保存配置（新增或更新；Key 留空时保留原值）</summary>
+    [RelayCommand]
+    private void SaveProfile()
     {
-        if (string.IsNullOrWhiteSpace(ApiKey))
+        if (string.IsNullOrWhiteSpace(EditName) || string.IsNullOrWhiteSpace(EditBaseUrl) || string.IsNullOrWhiteSpace(EditModelId))
+            return;
+
+        // 安全校验：Base URL 必须是 http/https
+        var url = EditBaseUrl.Trim();
+        if (!Uri.TryCreate(url, UriKind.Absolute, out var uri) || (uri.Scheme != "https" && uri.Scheme != "http"))
+            return;
+
+        var profile = SelectedProfile ?? new ModelProfile();
+        profile.Name = EditName.Trim();
+        profile.Provider = Enum.TryParse<LlmProvider>(EditProvider, out var p) ? p : LlmProvider.Custom;
+        profile.BaseUrl = url.TrimEnd('/');
+        profile.ModelId = EditModelId.Trim();
+        profile.IsDefault = EditIsDefault;
+        profile.EnableCache = EditEnableCache;
+        profile.Note = EditNote.Trim();
+
+        _profiles.Save(profile, EditApiKey.Trim());
+        RefreshProfiles();
+        IsEditing = false;
+    }
+
+    /// <summary>删除选中配置</summary>
+    [RelayCommand]
+    private void DeleteProfile()
+    {
+        if (SelectedProfile is null) return;
+        _profiles.Delete(SelectedProfile.Id);
+        RefreshProfiles();
+        IsEditing = false;
+    }
+
+    /// <summary>将选中配置设为默认</summary>
+    [RelayCommand]
+    private void SetDefaultProfile()
+    {
+        if (SelectedProfile is null) return;
+        _profiles.SetDefault(SelectedProfile.Id);
+        RefreshProfiles();
+    }
+
+    /// <summary>取消编辑</summary>
+    [RelayCommand]
+    private void CancelEdit()
+    {
+        IsEditing = false;
+        if (SelectedProfile is not null)
+            OnSelectedProfileChanged(SelectedProfile);
+    }
+
+    /// <summary>测试选中配置的连接与 Key</summary>
+    [RelayCommand]
+    private async Task TestProfileAsync()
+    {
+        var target = SelectedProfile;
+        if (target is null) return;
+        var key = string.IsNullOrEmpty(EditApiKey) ? _profiles.DecryptApiKey(target) : EditApiKey.Trim();
+        if (string.IsNullOrEmpty(key))
         {
             TestResult = LocalizationManager.Get("Str.SettingsTestNoKey");
             return;
@@ -129,12 +198,12 @@ public partial class SettingsViewModel : ObservableObject
         TestResult = LocalizationManager.Get("Str.SettingsTesting");
         try
         {
-            var ok = await _settings.TestConnectionAsync(ApiKey.Trim(), SelectedModel);
+            var ok = await _settings.TestConnectionAsync(key, target.ModelId, target.BaseUrl);
             TestResult = ok
                 ? LocalizationManager.Get("Str.SettingsTestOk")
                 : LocalizationManager.Get("Str.SettingsTestFail");
         }
-        catch (Exception)
+        catch
         {
             TestResult = LocalizationManager.Get("Str.SettingsTestNetworkError");
         }
@@ -144,7 +213,31 @@ public partial class SettingsViewModel : ObservableObject
         }
     }
 
-    // ---------- 主题 / 语言 / 导航栏 ----------
+    // ---------- 测试状态 ----------
+
+    [ObservableProperty]
+    private bool _isTesting;
+
+    [ObservableProperty]
+    private string _testResult = string.Empty;
+
+    // ---------- 偏好设置（即时保存） ----------
+
+    public IReadOnlyList<string> Languages { get; } = new[] { LocalizationManager.Zh, LocalizationManager.En };
+
+    [ObservableProperty]
+    private string _selectedLanguage;
+
+    partial void OnSelectedLanguageChanged(string value)
+    {
+        LocalizationManager.Apply(value);
+        _settings.SaveLanguage(value);
+        OnPropertyChanged(nameof(LanguageName));
+        OnPropertyChanged(nameof(ThemeName));
+        OnPropertyChanged(nameof(SidebarName));
+    }
+
+    public string LanguageName => SelectedLanguage == LocalizationManager.En ? "English" : "简体中文";
 
     public IReadOnlyList<string> Themes { get; } = new[] { ThemeManager.Light, ThemeManager.Dark };
 
@@ -155,39 +248,25 @@ public partial class SettingsViewModel : ObservableObject
     {
         ThemeManager.Apply(value);
         _settings.SaveTheme(value);
+        OnPropertyChanged(nameof(ThemeName));
     }
 
-    public IReadOnlyList<string> Languages { get; } = new[] { LocalizationManager.Zh, LocalizationManager.En };
-
-    [ObservableProperty]
-    private string _selectedLanguage;
-
-    /// <summary>语言名称（本地化显示）</summary>
-    public static string LanguageName(string lang)
-        => lang == LocalizationManager.En ? "English" : "简体中文";
-
-    partial void OnSelectedLanguageChanged(string value)
-    {
-        LocalizationManager.Apply(value);
-        _settings.SaveLanguage(value);
-        // 通知界面刷新（提供方/模型名称等动态文案）
-        OnPropertyChanged(nameof(Providers));
-    }
+    public string ThemeName => LocalizationManager.Get(SelectedTheme == ThemeManager.Dark
+        ? "Str.SettingsThemeDark" : "Str.SettingsThemeLight");
 
     public IReadOnlyList<string> SidebarPositions { get; } = new[] { "Right", "Left" };
 
     [ObservableProperty]
     private string _selectedSidebar;
 
-    public static string SidebarName(string pos)
-        => pos == "Left"
-            ? LocalizationManager.Get("Str.SettingsSidebarLeft")
-            : LocalizationManager.Get("Str.SettingsSidebarRight");
-
     partial void OnSelectedSidebarChanged(string value)
     {
         _settings.SaveSidebarPosition(value);
+        OnPropertyChanged(nameof(SidebarName));
     }
+
+    public string SidebarName => LocalizationManager.Get(SelectedSidebar == "Left"
+        ? "Str.SettingsSidebarLeft" : "Str.SettingsSidebarRight");
 
     // ---------- 更新检查 ----------
 
@@ -234,7 +313,6 @@ public partial class SettingsViewModel : ObservableObject
         }
     }
 
-    /// <summary>打开 Release 下载页</summary>
     [RelayCommand]
     private void OpenRelease()
     {
@@ -242,9 +320,8 @@ public partial class SettingsViewModel : ObservableObject
             Process.Start(new ProcessStartInfo(ReleaseUrl) { UseShellExecute = true });
     }
 
-    // ---------- 版本 / 保存 ----------
+    // ---------- 关于 ----------
 
-    /// <summary>应用版本号</summary>
     public string VersionText
     {
         get
@@ -252,14 +329,5 @@ public partial class SettingsViewModel : ObservableObject
             var v = typeof(SettingsViewModel).Assembly.GetName().Version;
             return v?.ToString(3) ?? "1.0.0";
         }
-    }
-
-    public void Save()
-    {
-        _settings.SaveApiKey(ApiKey.Trim());
-        _settings.SaveModel(SelectedModel);
-        _settings.SaveTheme(SelectedTheme);
-        _settings.SaveLanguage(SelectedLanguage);
-        _settings.SaveSidebarPosition(SelectedSidebar);
     }
 }

@@ -2,7 +2,7 @@
 ; 打包对象：自包含单文件发布产物
 
 #define MyAppName "GuideCraft"
-#define MyAppVersion "1.1.1"
+#define MyAppVersion "1.2.0"
 #define MyAppPublisher "YYRMMAYO"
 #define MyAppExeName "GuideCraft.exe"
 #define MyAppUrl "https://github.com/YYRMMAYO/GuideCraft"

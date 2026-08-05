@@ -26,6 +26,7 @@ public partial class App : Application
         services.AddSingleton<ILlmClient, LlmApiClient>();
         services.AddSingleton<ILocalStorageService, LocalStorageService>();
         services.AddSingleton<ICryptoService, CryptoService>();
+        services.AddSingleton<IModelProfileService, ModelProfileService>();
         services.AddSingleton<ISettingsService, SettingsService>();
         services.AddSingleton<IChatService, ChatService>();
         services.AddSingleton<IRequirementSummarizer, RequirementSummarizer>();
@@ -33,8 +34,8 @@ public partial class App : Application
         services.AddSingleton<IProjectExporter, ProjectExporter>();
         services.AddSingleton<IUpdateChecker, UpdateChecker>();
         services.AddSingleton<MainViewModel>();
-        services.AddTransient<SettingsViewModel>();
-        services.AddTransient<SettingsDialog>();
+        services.AddSingleton<SettingsViewModel>();
+        services.AddSingleton<Views.SettingsPanel>();
         services.AddTransient<MainWindow>();
         _provider = services.BuildServiceProvider();
 
@@ -52,6 +53,15 @@ public partial class App : Application
         vm.LoadConversations();
 
         window.Show();
+
+#if DEBUG
+        // 调试辅助：--settings 直接切到设置页
+        if (e.Args.Contains("--settings"))
+        {
+            var mainVm = _provider.GetRequiredService<ViewModels.MainViewModel>();
+            System.Windows.Threading.Dispatcher.CurrentDispatcher.BeginInvoke(() => mainVm.GoToSettingsCommand.Execute(null));
+        }
+#endif
 #if DEBUG
         // 调试期：模拟一个已生成产物的会话，验证 UI 完整状态（命令行 --no-demo 跳过）
         var isDemo = !e.Args.Contains("--no-demo");
@@ -92,6 +102,7 @@ public partial class App : Application
     /// <summary>XAML 解析异常等 UI 线程异常统一弹窗提示，避免闪退</summary>
     private void OnDispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
     {
+        try { System.IO.File.WriteAllText(@"G:\AIOP\.workbuddy\tmp\crash.txt", $"{e.Exception}\n\n{e.Exception.StackTrace}"); } catch { }
         MessageBox.Show(
             $"程序遇到问题：\n{e.Exception.Message}",
             UiStrings.AppTitle,

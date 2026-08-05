@@ -2,6 +2,7 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="clr-namespace:GuideCraft.ViewModels"
+        xmlns:views="clr-namespace:GuideCraft.Views"
         xmlns:controls="clr-namespace:GuideCraft.Controls"
         Title="{DynamicResource Str.AppTitle}"
         Width="1100" Height="720"
@@ -125,6 +126,27 @@
                             Command="{Binding NewConversationCommand}"
                             Margin="0,0,0,10" />
 
+                    <!-- 页面切换（对话 / 设置） -->
+                    <StackPanel DockPanel.Dock="Top" Margin="0,0,0,10">
+                        <RadioButton GroupName="NavPages" Style="{StaticResource NavItemStyle}"
+                                     IsChecked="{Binding IsChatPage, Mode=OneWay}"
+                                     Command="{Binding GoToChatCommand}"
+                                     Margin="0,0,0,2">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="💬" FontSize="13" Margin="0,0,8,0" />
+                                <TextBlock Text="对话" FontSize="13" Foreground="{DynamicResource PrimaryTextBrush}" />
+                            </StackPanel>
+                        </RadioButton>
+                        <RadioButton GroupName="NavPages" Style="{StaticResource NavItemStyle}"
+                                     IsChecked="{Binding IsSettingsPage, Mode=OneWay}"
+                                     Command="{Binding GoToSettingsCommand}">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="⚙" FontSize="13" Margin="0,0,8,0" />
+                                <TextBlock Text="设置" FontSize="13" Foreground="{DynamicResource PrimaryTextBrush}" />
+                            </StackPanel>
+                        </RadioButton>
+                    </StackPanel>
+
                     <ListBox ItemsSource="{Binding Conversations}"
                              SelectedItem="{Binding SelectedConversation}"
                              ItemContainerStyle="{StaticResource ConversationItemStyle}"
@@ -142,8 +164,11 @@
                 </DockPanel>
             </Border>
 
-            <!-- ========== 对话区 ========== -->
+            <!-- ========== 内容区（对话 / 设置 双面板） ========== -->
             <Grid Grid.Column="{Binding IsSidebarRight, Converter={StaticResource BoolToColumnConverter}, ConverterParameter=inverse}">
+                <!-- 对话面板 -->
+                <Grid x:Name="ChatArea"
+                      Visibility="{Binding IsChatPage, Converter={StaticResource BoolToVisibilityConverter}}">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="*" />
                     <RowDefinition Height="Auto" />
@@ -258,7 +283,8 @@
                                      Text="{Binding InputText, UpdateSourceTrigger=PropertyChanged}"
                                      AcceptsReturn="True"
                                      VerticalScrollBarVisibility="Auto"
-                                     MaxHeight="120"
+                                     MaxLength="8000"
+                                     MinHeight="36"
                                      Padding="4,4"
                                      FontSize="13.5"
                                      KeyDown="InputBox_OnKeyDown"
@@ -283,6 +309,12 @@
                         </Grid>
                     </Border>
                 </Grid>
+                </Grid><!-- /ChatArea -->
+
+                <!-- 设置面板（模块化页面） -->
+                <views:SettingsPanel x:Name="SettingsArea"
+                                     Visibility="{Binding IsSettingsPage, Converter={StaticResource BoolToVisibilityConverter}}"
+                                     DataContext="{Binding SettingsVm}" />
             </Grid>
         </Grid>
 

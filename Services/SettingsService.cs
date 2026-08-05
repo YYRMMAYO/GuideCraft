@@ -33,7 +33,7 @@ public interface ISettingsService
     void MarkWelcomeShown();
 
     /// <summary>测试 API Key 是否可用（调用轻量接口）</summary>
-    Task<bool> TestConnectionAsync(string apiKey, string modelId, CancellationToken ct = default);
+    Task<bool> TestConnectionAsync(string apiKey, string modelId, string baseUrl, CancellationToken ct = default);
 }
 
 /// <summary>设置服务实现：API Key 经 DPAPI 加密存 SQLite，其余设置直接落盘</summary>
@@ -119,14 +119,13 @@ public sealed class SettingsService : ISettingsService
         Settings.WelcomeShown = true;
     }
 
-    public async Task<bool> TestConnectionAsync(string apiKey, string modelId, CancellationToken ct = default)
+    public async Task<bool> TestConnectionAsync(string apiKey, string modelId, string baseUrl, CancellationToken ct = default)
     {
         try
         {
-            var info = LlmCatalog.Find(modelId) ?? LlmCatalog.Default;
             var reply = await _api.ChatAsync(
                 new[] { new ChatApiMessage(ChatRole.User, "你好，请回复：连接成功") },
-                apiKey, info.BaseUrl, info.Id, ct);
+                apiKey, baseUrl, modelId, ct);
             return !string.IsNullOrWhiteSpace(reply);
         }
         catch (Exception)

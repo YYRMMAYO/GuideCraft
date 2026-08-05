@@ -4,7 +4,8 @@ namespace GuideCraft.Services;
 public enum LlmProvider
 {
     Qwen,
-    DeepSeek
+    DeepSeek,
+    Custom
 }
 
 /// <summary>模型接入信息（OpenAI 兼容）</summary>

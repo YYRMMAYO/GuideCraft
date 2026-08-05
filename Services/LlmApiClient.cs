@@ -18,13 +18,15 @@ public interface ILlmClient
         string model,
         CancellationToken ct = default);
 
-    /// <summary>流式对话，增量文本通过 onDelta 回调输出</summary>
+    /// <summary>流式对话：增量文本经 onDelta 输出；调用结束后可选经 onUsage 返回用量（缓存命中/费用估算数据）</summary>
     Task StreamChatAsync(
         IReadOnlyList<ChatApiMessage> messages,
         Func<string, Task> onDelta,
         string apiKey,
         string baseUrl,
         string model,
+        bool includeUsage = true,
+        Action<UsageInfo>? onUsage = null,
         CancellationToken ct = default);
 }
 
@@ -68,7 +70,7 @@ public sealed class LlmApiClient : ILlmClient
         {
             sb.Append(delta);
             return Task.CompletedTask;
-        }, apiKey, baseUrl, model, ct);
+        }, apiKey, baseUrl, model, includeUsage: false, onUsage: null, ct: ct);
         return sb.ToString();
     }
 
@@ -78,6 +80,8 @@ public sealed class LlmApiClient : ILlmClient
         string apiKey,
         string baseUrl,
         string model,
+        bool includeUsage = true,
+        Action<UsageInfo>? onUsage = null,
         CancellationToken ct = default)
     {
         if (string.IsNullOrWhiteSpace(apiKey))
@@ -86,7 +90,7 @@ public sealed class LlmApiClient : ILlmClient
             throw new LlmApiException(400, "Invalid base URL or model");
 
         var url = baseUrl.TrimEnd('/') + EndpointSuffix;
-        var payload = BuildPayload(messages, model);
+        var payload = BuildPayload(messages, model, includeUsage);
         using var req = new HttpRequestMessage(HttpMethod.Post, url);
         req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
         req.Content = new StringContent(
@@ -131,9 +135,19 @@ public sealed class LlmApiClient : ILlmClient
                 // 逐行解析 JSON；单行 data 完整，按行边界解析安全
                 using var doc = JsonDocument.Parse(data);
                 var root = doc.RootElement;
+
+                // usage chunk（include_usage 开启时 [DONE] 前出现；choices 为空数组）
+                if (includeUsage && root.TryGetProperty("usage", out var usageElem))
+                {
+                    var usage = ParseUsage(usageElem);
+                    if (usage is not null)
+                        onUsage?.Invoke(usage);
+                    continue;
+                }
+
                 if (!root.TryGetProperty("choices", out var choices)
                     || choices.GetArrayLength() == 0)
-                    continue;                                 // usage chunk 或空 choices
+                    continue;                                 // 空 choices（如错误 chunk）
 
                 var delta = choices[0].GetProperty("delta");
                 if (delta.TryGetProperty("content", out var c)
@@ -147,7 +161,34 @@ public sealed class LlmApiClient : ILlmClient
         }
     }
 
-    private static object BuildPayload(IReadOnlyList<ChatApiMessage> messages, string model)
+    private static UsageInfo? ParseUsage(JsonElement usage)
+    {
+        try
+        {
+            long GetLong(string name) =>
+                usage.TryGetProperty(name, out var v) && v.ValueKind == JsonValueKind.Number
+                    ? v.GetInt64()
+                    : 0;
+
+            var info = new UsageInfo
+            {
+                PromptTokens = GetLong("prompt_tokens"),
+                CompletionTokens = GetLong("completion_tokens"),
+                TotalTokens = GetLong("total_tokens"),
+                CacheHitTokens = GetLong("prompt_cache_hit_tokens"),
+                CacheMissTokens = GetLong("prompt_cache_miss_tokens")
+            };
+            return info.TotalTokens == 0 && info.CacheHitTokens == 0 && info.CacheMissTokens == 0
+                ? null
+                : info;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private static object BuildPayload(IReadOnlyList<ChatApiMessage> messages, string model, bool includeUsage)
     {
         var msgs = messages
             .Where(m => !string.IsNullOrWhiteSpace(m.Content))
@@ -158,12 +199,21 @@ public sealed class LlmApiClient : ILlmClient
             })
             .ToList();
 
-        return new
+        // includeUsage：DeepSeek / Qwen 兼容（用于缓存命中率与费用估算）
+        var payload = new Dictionary<string, object>
         {
-            model,
-            messages = msgs,
-            stream = true,
-            temperature = 0.7
+            ["model"] = model,
+            ["messages"] = msgs,
+            ["stream"] = true,
+            ["temperature"] = 0.7
         };
+        if (includeUsage)
+        {
+            payload["stream_options"] = new Dictionary<string, object>
+            {
+                ["include_usage"] = true
+            };
+        }
+        return payload;
     }
 }

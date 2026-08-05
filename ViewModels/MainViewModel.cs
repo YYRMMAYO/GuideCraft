@@ -7,13 +7,19 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using GuideCraft.Models;
 using GuideCraft.Services;
-using GuideCraft.Views;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Win32;
 
 namespace GuideCraft.ViewModels;
 
-/// <summary>主窗口视图模型：引导式对话状态机、Markdown 渲染输入、API 流式调用、阶段切换</summary>
+/// <summary>主界面页面</summary>
+public enum MainPage
+{
+    Chat,
+    Settings
+}
+
+/// <summary>主窗口视图模型：引导式对话状态机、页面切换、API 流式调用、缓存/费用显示</summary>
 public partial class MainViewModel : ObservableObject
 {
     private readonly IServiceProvider _services;
@@ -35,28 +41,49 @@ public partial class MainViewModel : ObservableObject
         var settings = services.GetService<ISettingsService>();
         if (settings is not null)
         {
-            _hasApiKey = !string.IsNullOrWhiteSpace(settings.Settings.ApiKey);
+            _hasApiKey = CurrentProfile is not null
+                          && !string.IsNullOrWhiteSpace(_profiles.DecryptApiKey(CurrentProfile));
             _isSidebarRight = settings.Settings.SidebarPosition != "Left";
             _isWelcomeVisible = !settings.Settings.WelcomeShown;
         }
         StartWelcomeLoop();
     }
 
+    // ---------- 页面切换 ----------
+
+    [ObservableProperty]
+    private MainPage _currentPage = MainPage.Chat;
+
+    public bool IsChatPage => CurrentPage == MainPage.Chat;
+    public bool IsSettingsPage => CurrentPage == MainPage.Settings;
+
+    partial void OnCurrentPageChanged(MainPage value)
+    {
+        OnPropertyChanged(nameof(IsChatPage));
+        OnPropertyChanged(nameof(IsSettingsPage));
+    }
+
+    [RelayCommand]
+    private void GoToChat() => CurrentPage = MainPage.Chat;
+
+    [RelayCommand]
+    private void GoToSettings()
+    {
+        CurrentPage = MainPage.Settings;
+        RefreshLocalized();
+    }
+
     // ---------- 布局与引导 ----------
 
-    /// <summary>导航栏（侧边栏）是否在右侧（可在设置中切换，默认右侧）</summary>
     [ObservableProperty]
     private bool _isSidebarRight = true;
 
-    /// <summary>首次引导教程是否可见</summary>
     [ObservableProperty]
     private bool _isWelcomeVisible;
 
-    /// <summary>引导轮播当前步骤（0-3）</summary>
     [ObservableProperty]
     private int _currentStep;
 
-    /// <summary>引导步骤数据（图标 + 文案 key）</summary>
     private static readonly (string Icon, string TitleKey, string TextKey)[] WelcomeStepData =
     {
         ("🔑", "Str.Welcome.Step1Title", "Str.Welcome.Step1Text"),
@@ -77,7 +104,6 @@ public partial class MainViewModel : ObservableObject
         WelcomeStepChanged?.Invoke(value);
     }
 
-    /// <summary>步骤变化（View 订阅播放动画）</summary>
     public event Action<int>? WelcomeStepChanged;
 
     private System.Windows.Threading.DispatcherTimer? _welcomeTimer;
@@ -93,7 +119,6 @@ public partial class MainViewModel : ObservableObject
         _welcomeTimer.Start();
     }
 
-    /// <summary>语言变化后刷新本地化文案（设置保存后调用）</summary>
     public void RefreshLocalized()
     {
         OnPropertyChanged(nameof(CurrentStepTitle));
@@ -101,7 +126,6 @@ public partial class MainViewModel : ObservableObject
         OnPropertyChanged(nameof(CurrentStepIcon));
     }
 
-    /// <summary>关闭引导教程并标记已展示</summary>
     [RelayCommand]
     private void CloseWelcome()
     {
@@ -151,14 +175,12 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private bool _hasApiKey;
 
-    /// <summary>是否有消息（用于空状态卡片显隐）</summary>
     [ObservableProperty]
     private bool _hasMessages;
 
-    /// <summary>是否可导出 ZIP（仅生成产物后可用）</summary>
     public bool CanExport => _lastGeneratedCode is not null;
 
-    // ---------- 服务懒解析 ----------
+    // ---------- 服务 ----------
 
     private ILlmClient _api => _services.GetRequiredService<ILlmClient>();
     private IChatService _chat => _services.GetRequiredService<IChatService>();
@@ -167,11 +189,22 @@ public partial class MainViewModel : ObservableObject
     private IProjectExporter _exporter => _services.GetRequiredService<IProjectExporter>();
     private ISettingsService _settings => _services.GetRequiredService<ISettingsService>();
     private ILocalStorageService _storage => _services.GetRequiredService<ILocalStorageService>();
+    private IModelProfileService _profiles => _services.GetRequiredService<IModelProfileService>();
 
-    /// <summary>当前模型接入信息</summary>
-    private LlmModelInfo ModelInfo => _settings.CurrentModelInfo;
+    /// <summary>当前使用的模型配置（用户自定义，自由接入 API）</summary>
+    public ModelProfile? CurrentProfile => _profiles.GetDefault();
 
-    /// <summary>启动时加载会话列表</summary>
+    /// <summary>测试连接时选择的目标配置</summary>
+    private ModelProfile? _testProfile;
+
+    /// <summary>由设置页选择并测试的配置</summary>
+    public void SetTestProfile(ModelProfile? profile) => _testProfile = profile;
+
+    /// <summary>设置页视图模型（模块化页面）</summary>
+    public SettingsViewModel SettingsVm => _services.GetRequiredService<SettingsViewModel>();
+
+    // ---------- 会话管理 ----------
+
     public void LoadConversations()
     {
         Conversations.Clear();
@@ -179,7 +212,6 @@ public partial class MainViewModel : ObservableObject
             Conversations.Add(c);
     }
 
-    /// <summary>新建对话并保存当前（如果非空）</summary>
     public void PersistCurrent()
     {
         if (Messages.Count == 0) return;
@@ -189,13 +221,10 @@ public partial class MainViewModel : ObservableObject
         _storage.SaveConversation(Conversation);
     }
 
-    /// <summary>选中会话切换</summary>
     partial void OnSelectedConversationChanged(Conversation? value)
     {
         if (value is null) return;
-        // 持久化当前（如果有）
         PersistCurrent();
-        // 直接使用传入的会话（已在内存中，ListBox ItemSource 提供）
         Conversation = value;
         Messages.Clear();
         _lastGeneratedCode = null;
@@ -237,7 +266,6 @@ public partial class MainViewModel : ObservableObject
             return;
         }
 
-        // 阶段切换判定
         var oldPhase = Phase;
         if (Phase == ChatPhase.Idle) Phase = ChatPhase.Clarify;
         else if (Phase == ChatPhase.Confirm)
@@ -246,7 +274,6 @@ public partial class MainViewModel : ObservableObject
             else if (_chat.IsModifyReply(text)) Phase = ChatPhase.Clarify;
         }
 
-        // 首次有内容时更新标题
         if (Conversation.Title == "新对话" && !string.IsNullOrWhiteSpace(text))
             Conversation.Title = text.Length > 20 ? text[..20] + "…" : text;
 
@@ -300,14 +327,8 @@ public partial class MainViewModel : ObservableObject
     [RelayCommand]
     private void OpenSettings()
     {
-        var dialog = _services.GetRequiredService<SettingsDialog>();
-        dialog.Owner = Application.Current.MainWindow;
-        if (dialog.ShowDialog() == true)
-        {
-            HasApiKey = !string.IsNullOrWhiteSpace(_settings.Settings.ApiKey);
-            IsSidebarRight = _settings.Settings.SidebarPosition != "Left";
-            RefreshLocalized();
-        }
+        // 设置改为模块页面（不再是弹窗）
+        GoToSettings();
     }
 
     [RelayCommand]
@@ -340,23 +361,36 @@ public partial class MainViewModel : ObservableObject
 
     // ---------- 阶段实现 ----------
 
-    /// <summary>通用流式对话（Clarify/Confirm/Iterate 阶段）</summary>
     private async Task DoChatStreamAsync()
     {
         var assistant = new ChatMessageViewModel(ChatRole.Assistant);
         Messages.Add(assistant);
         _cts = new CancellationTokenSource();
         IsStreaming = true;
+
+        var profile = CurrentProfile;
+        var apiKey = profile is null ? string.Empty : _profiles.DecryptApiKey(profile);
+        UsageInfo? lastUsage = null;
+
         try
         {
             var apiMessages = BuildApiMessages();
-            var model = ModelInfo;
             await _api.StreamChatAsync(apiMessages, delta =>
-                _ui.InvokeAsync(() => assistant.AppendContent(delta)).Task,
-                _settings.Settings.ApiKey,
-                model.BaseUrl,
-                model.Id,
+                    _ui.InvokeAsync(() => assistant.AppendContent(delta)).Task,
+                apiKey,
+                profile?.BaseUrl ?? string.Empty,
+                profile?.ModelId ?? string.Empty,
+                includeUsage: profile?.EnableCache ?? true,
+                usage => { lastUsage = usage; },
                 _cts.Token);
+
+            // 附加缓存命中率 + 预计费用（用户可见的透明用量信息）
+            if (lastUsage is not null && profile is not null)
+            {
+                var usageLine = BuildUsageLine(lastUsage, profile);
+                if (usageLine is not null)
+                    assistant.AppendContent($"\n\n---\n*{usageLine}*");
+            }
 
             // 流式完成后：Clarify → Confirm 自动切换
             if (Phase == ChatPhase.Clarify && _chat.IsRequirementSummary(assistant.Content))
@@ -386,7 +420,31 @@ public partial class MainViewModel : ObservableObject
         }
     }
 
-    /// <summary>需求摘要 + 代码生成（Confirm 阶段用户回复"确认"后触发）</summary>
+    /// <summary>缓存命中率 + 预计费用文本（本地化友好）</summary>
+    private static string? BuildUsageLine(UsageInfo u, ModelProfile profile)
+    {
+        if (u.TotalTokens == 0 && u.CacheHitTokens == 0) return null;
+
+        // 费用估算（元）
+        double cost = 0;
+        if (profile.EnableCache)
+        {
+            cost = (u.CacheHitTokens * profile.CacheHitPricePerM
+                    + u.CacheMissTokens * profile.InputPricePerM
+                    + u.CompletionTokens * profile.OutputPricePerM) / 1_000_000.0;
+        }
+        else
+        {
+            cost = (u.PromptTokens * profile.InputPricePerM
+                    + u.CompletionTokens * profile.OutputPricePerM) / 1_000_000.0;
+        }
+
+        var hitText = u.CacheHitRate is { } rate
+            ? $"缓存命中 {rate:F0}% · "
+            : string.Empty;
+        return $"{hitText}预计费用 ¥{cost:F4}（{u.PromptTokens}/{u.CompletionTokens} tokens）";
+    }
+
     private async Task DoGenerateAsync(string userConfirmMessage)
     {
         var statusVm = new ChatMessageViewModel(ChatRole.Assistant)
@@ -395,25 +453,20 @@ public partial class MainViewModel : ObservableObject
         };
         Messages.Add(statusVm);
 
+        var profile = CurrentProfile;
+        var apiKey = profile is null ? string.Empty : _profiles.DecryptApiKey(profile);
+
         try
         {
-            // 1. 汇总对话历史
             var history = Messages
                 .Where(m => !string.IsNullOrWhiteSpace(m.Content))
                 .Select(m => new ChatApiMessage(m.Role, m.Content))
                 .ToList();
 
-            var model = ModelInfo;
-            var apiKey = _settings.Settings.ApiKey;
-
-            // 2. 生成需求摘要
-            var reqDoc = await _summarizer.SummarizeAsync(history, apiKey, model);
-
-            // 3. 生成代码
-            var code = await _codeGen.GenerateAsync(reqDoc, apiKey, model);
+            var reqDoc = await _summarizer.SummarizeAsync(history, apiKey, ToModelInfo(profile));
+            var code = await _codeGen.GenerateAsync(reqDoc, apiKey, ToModelInfo(profile));
             _lastGeneratedCode = code;
 
-            // 4. 持久化到 Conversation
             Conversation.GeneratedProject = new GeneratedProject
             {
                 Type = ProjectType.PythonScript,
@@ -423,7 +476,6 @@ public partial class MainViewModel : ObservableObject
                 RequirementDocument = reqDoc
             };
 
-            // 5. 用 Markdown 渲染展示产物
             var depsLine = code.Dependencies.Count == 0 ? UiStrings.NoDeps : string.Join("、", code.Dependencies);
             var body = $$"""
 {{UiStrings.GeneratedHeader}}
@@ -453,6 +505,19 @@ public partial class MainViewModel : ObservableObject
         }
     }
 
+    /// <summary>把用户配置转换为 LlmModelInfo（兼容摘要/代码生成服务）</summary>
+    private static LlmModelInfo ToModelInfo(ModelProfile? profile)
+    {
+        if (profile is null) return LlmCatalog.Default;
+        return new LlmModelInfo
+        {
+            Id = profile.ModelId,
+            Provider = profile.Provider,
+            BaseUrl = profile.BaseUrl,
+            KeyUrl = LlmCatalog.Default.KeyUrl
+        };
+    }
+
     private static string MapApiError(int status) => status switch
     {
         401 => UiStrings.ApiKeyInvalid,
@@ -477,7 +542,10 @@ public partial class MainViewModel : ObservableObject
         Messages.Add(new ChatMessageViewModel(role, content));
     }
 
-    /// <summary>构建 API 请求：阶段对应 System Prompt + 截至当前 assistant 空消息之前的所有对话</summary>
+    /// <summary>
+    /// 构建 API 请求：System Prompt（稳定前缀，命中 DeepSeek/Qwen 上下文缓存）
+    /// + 截断的历史消息（按 token 估算保留最近，控制成本与上下文窗口）
+    /// </summary>
     private IReadOnlyList<ChatApiMessage> BuildApiMessages()
     {
         var sysPrompt = _chat.GetSystemPrompt(Phase);
@@ -485,12 +553,26 @@ public partial class MainViewModel : ObservableObject
         {
             new(ChatRole.System, sysPrompt)
         };
+
         // 排除最后一条（正在流式的 assistant 空消息）
-        for (int i = 0; i < Messages.Count - 1; i++)
+        var history = Messages.Take(Messages.Count - 1).ToList();
+
+        // token 估算截断：保留最近的 ~6000 估算 tokens 历史（中文约 1 字 ≈ 1 token）
+        const int maxHistoryTokens = 6000;
+        int acc = 0;
+        var kept = new List<ChatMessageViewModel>();
+        for (int i = history.Count - 1; i >= 0; i--)
         {
-            var m = Messages[i];
-            msgs.Add(new ChatApiMessage(m.Role, m.Content));
+            var m = history[i];
+            var est = Math.Max(1, m.Content.Length / 2);
+            if (acc + est > maxHistoryTokens && kept.Count > 0) break;
+            acc += est;
+            kept.Insert(0, m);
         }
+
+        foreach (var m in kept)
+            msgs.Add(new ChatApiMessage(m.Role, m.Content));
+
         return msgs;
     }
 }

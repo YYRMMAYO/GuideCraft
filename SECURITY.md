@@ -137,3 +137,41 @@ no automatic download/install of binaries.
 
 If you discover a security issue, please open a GitHub Issue or contact the
 author (YYRMMAYO) directly. Do not disclose publicly before a fix is released.
+---
+
+## v1.2.0 Security Additions
+
+### User-defined model profiles
+
+Since v1.2.0 users can create their own model profiles (provider, base URL, model
+ID, API key). Each profile is stored in `model_profiles` (SQLite) with the API
+key encrypted at rest by `CryptoService` (AES-256-GCM, DPAPI-wrapped master key).
+
+**Input validation on profile save:**
+
+- `BaseUrl` is rejected unless `Uri.TryCreate` succeeds AND the scheme is either
+  `http` or `https`. This blocks `file://`, `gopher://`, `javascript:`, `data:`
+  and other schemes that could otherwise be abused to fetch local resources or
+  trigger side effects.
+- `Name`, `ModelId`, `Note` are capped at 100 / 200 / 500 chars to prevent
+  resource exhaustion.
+- `ApiKey` is capped at 500 chars (provider keys are typically ≤ 200 chars).
+- The profile ID is a server-generated GUID; we never echo attacker-controlled
+  values into logs or HTTP requests.
+
+### SSRF defenses
+
+`LlmApiClient` is the only component that issues outbound HTTP. The BaseUrl is
+always validated at save time (see above) and resolved against a fixed
+`<provider>/chat/completions` suffix. There is no path-traversal surface and the
+API key is sent only to the resolved host. We do not follow redirects
+(`HttpClient` default), so an attacker who somehow inserts a redirect target
+cannot pivot the request.
+
+### Stream-options include_usage
+
+The chat request opts into `stream_options.include_usage = true`. The DeepSeek API
+returns token accounting (including `prompt_cache_hit_tokens`) in the final SSE
+chunk. We parse it into a `UsageInfo` and surface the cache hit rate and
+estimated cost in the UI. The API response body is never echoed to the user, so
+any leakage of token IDs is contained.

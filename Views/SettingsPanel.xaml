@@ -1,0 +1,250 @@
+<UserControl x:Class="GuideCraft.Views.SettingsPanel"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:utils="clr-namespace:GuideCraft.Utils">
+    <UserControl.Background>
+        <DynamicResource ResourceKey="WindowBackgroundBrush" />
+    </UserControl.Background>
+    <ScrollViewer VerticalScrollBarVisibility="Auto"
+                  HorizontalScrollBarVisibility="Disabled"
+                  Style="{StaticResource FlatScrollViewerStyle}">
+        <StackPanel Margin="32,24,32,32" MaxWidth="860" HorizontalAlignment="Center">
+            <!-- 标题 -->
+            <TextBlock Text="设置" FontSize="26" FontWeight="Bold"
+                       Foreground="{DynamicResource PrimaryTextBrush}" />
+            <TextBlock Text="配置你的模型接入、偏好与更新" FontSize="13"
+                       Foreground="{DynamicResource SecondaryTextBrush}" Margin="0,6,0,0" />
+
+            <!-- ============ 模型配置 ============ -->
+            <Border Background="{DynamicResource CardBackgroundBrush}"
+                    BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
+                    CornerRadius="16" Padding="20,18" Margin="0,20,0,0">
+                <StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="模型配置" FontSize="17" FontWeight="Bold"
+                                   Foreground="{DynamicResource PrimaryTextBrush}" VerticalAlignment="Center" />
+                        <TextBlock Text="· 每个配置对应一个 API 密钥，可自由创建多个" FontSize="12"
+                                   Foreground="{DynamicResource SecondaryTextBrush}"
+                                   VerticalAlignment="Center" Margin="10,2,0,0" />
+                        <Button Style="{StaticResource SecondaryButtonStyle}" Content="＋ 新增"
+                                Command="{Binding NewProfileCommand}"
+                                HorizontalAlignment="Right" Margin="0,0,0,0"
+                                HorizontalContentAlignment="Center" />
+                    </StackPanel>
+
+                    <!-- 配置列表 -->
+                    <Grid Margin="0,14,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <!-- 左侧：列表 -->
+                        <ListBox Grid.Column="0" Width="230" MinHeight="220"
+                                 ItemsSource="{Binding ProfilesList}"
+                                 SelectedItem="{Binding SelectedProfile}"
+                                 ItemContainerStyle="{StaticResource ConversationItemStyle}"
+                                 Background="Transparent" BorderThickness="0">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel>
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="{Binding Name}" FontSize="13" FontWeight="SemiBold"
+                                                       Foreground="{DynamicResource PrimaryTextBrush}" />
+                                            <Border Background="{DynamicResource AccentBrush}" CornerRadius="6"
+                                                    Padding="5,1" Margin="6,0,0,0"
+                                                    Visibility="{Binding IsDefault, Converter={StaticResource BoolToVisibilityConverter}}">
+                                                <TextBlock Text="默认" FontSize="9" Foreground="White" />
+                                            </Border>
+                                        </StackPanel>
+                                        <TextBlock Text="{Binding ModelId}" FontSize="11"
+                                                   Foreground="{DynamicResource SecondaryTextBrush}"
+                                                   Margin="0,2,0,0" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+
+                        <!-- 右侧：编辑表单 -->
+                        <Border Grid.Column="1" Margin="16,0,0,0"
+                                Background="{DynamicResource WindowBackgroundBrush}"
+                                BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
+                                CornerRadius="12" Padding="16,14"
+                                Visibility="{Binding IsEditing, Converter={StaticResource BoolToVisibilityConverter}}">
+                            <StackPanel>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <!-- 名称 -->
+                                    <StackPanel Grid.Column="0" Margin="0,0,8,0">
+                                        <TextBlock Text="名称" FontSize="12" Foreground="{DynamicResource SecondaryTextBrush}" Margin="0,0,0,4" />
+<TextBox Text="{Binding EditName, UpdateSourceTrigger=PropertyChanged}"
+                                         MaxLength="100"
+                                         Style="{StaticResource BaseInputStyle}" />
+                                    </StackPanel>
+                                    <!-- 提供方 -->
+                                    <StackPanel Grid.Column="1" Margin="8,0,0,0">
+                                        <TextBlock Text="提供方" FontSize="12" Foreground="{DynamicResource SecondaryTextBrush}" Margin="0,0,0,4" />
+                                        <ComboBox ItemsSource="{Binding ProviderPresets}"
+                                                  SelectedItem="{Binding EditProvider}"
+                                                  MinHeight="32" VerticalContentAlignment="Center"
+                                                  Background="{DynamicResource InputBackgroundBrush}"
+                                                  Foreground="{DynamicResource PrimaryTextBrush}"
+                                                  BorderBrush="{DynamicResource InputBorderBrush}"
+                                                  Padding="8,5" />
+                                    </StackPanel>
+                                </Grid>
+
+                                <TextBlock Text="Base URL（OpenAI 兼容端点）" FontSize="12" Foreground="{DynamicResource SecondaryTextBrush}" Margin="0,12,0,4" />
+                                <TextBox Text="{Binding EditBaseUrl, UpdateSourceTrigger=PropertyChanged}"
+                                         MaxLength="500"
+                                         Style="{StaticResource BaseInputStyle}" />
+
+                                <TextBlock Text="模型 ID" FontSize="12" Foreground="{DynamicResource SecondaryTextBrush}" Margin="0,12,0,4" />
+                                <TextBox Text="{Binding EditModelId, UpdateSourceTrigger=PropertyChanged}"
+                                         MaxLength="200"
+                                         Style="{StaticResource BaseInputStyle}" />
+                                <TextBlock Text="{Binding ModelPresetHint}" FontSize="11"
+                                           Foreground="{DynamicResource TertiaryTextBrush}" Margin="0,4,0,0" />
+
+                                <TextBlock Text="API Key（留空保留原值）" FontSize="12" Foreground="{DynamicResource SecondaryTextBrush}" Margin="0,12,0,4" />
+<PasswordBox utils:PasswordBoxHelper.BindPassword="True"
+                                     utils:PasswordBoxHelper.BoundPassword="{Binding EditApiKey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                     MaxLength="500"
+                                     Style="{StaticResource BasePasswordStyle}" />
+
+                                <WrapPanel Margin="0,12,0,0">
+                                    <CheckBox Content="设为默认配置" IsChecked="{Binding EditIsDefault}"
+                                              Foreground="{DynamicResource PrimaryTextBrush}" VerticalAlignment="Center" />
+                                    <CheckBox Content="启用缓存（显示命中率与费用）" IsChecked="{Binding EditEnableCache}"
+                                              Foreground="{DynamicResource PrimaryTextBrush}" VerticalAlignment="Center" Margin="20,0,0,0" />
+                                </WrapPanel>
+
+                                <TextBlock Text="备注" FontSize="12" Foreground="{DynamicResource SecondaryTextBrush}" Margin="0,12,0,4" />
+                                <TextBox Text="{Binding EditNote, UpdateSourceTrigger=PropertyChanged}"
+                                         MaxLength="500"
+                                         Style="{StaticResource BaseInputStyle}" />
+
+                                <StackPanel Orientation="Horizontal" Margin="0,16,0,0">
+                                    <Button Style="{StaticResource PrimaryButtonStyle}" Content="保存配置"
+                                            Command="{Binding SaveProfileCommand}" Width="96" />
+                                    <Button Style="{StaticResource SecondaryButtonStyle}" Content="取消"
+                                            Command="{Binding CancelEditCommand}" Margin="8,0,0,0" Width="80" />
+                                    <Button Style="{StaticResource DangerButtonStyle}" Content="删除"
+                                            Command="{Binding DeleteProfileCommand}" Margin="8,0,0,0" />
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- 未编辑时：显示选中配置信息 + 操作 -->
+                        <Border Grid.Column="1" Margin="16,0,0,0"
+                                Background="{DynamicResource WindowBackgroundBrush}"
+                                BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
+                                CornerRadius="12" Padding="16,14"
+                                Visibility="{Binding IsEditing, Converter={StaticResource InverseBoolToVisibilityConverter}}">
+                            <StackPanel>
+                                <TextBlock Text="选中配置信息" FontSize="14" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource PrimaryTextBrush}" />
+                                <TextBlock Margin="0,10,0,0" FontSize="13" LineHeight="22"
+                                           Foreground="{DynamicResource SecondaryTextBrush}">
+                                    <Run Text="提供方："/> <Run Text="{Binding SelectedProfile.Provider}" />
+                                    <LineBreak />
+                                    <Run Text="模型："/> <Run Text="{Binding SelectedProfile.ModelId}" />
+                                    <LineBreak />
+                                    <Run Text="端点："/> <Run Text="{Binding SelectedProfile.BaseUrl}" />
+                                </TextBlock>
+                                <StackPanel Orientation="Horizontal" Margin="0,16,0,0">
+                                    <Button Style="{StaticResource SecondaryButtonStyle}" Content="编辑"
+                                            Command="{Binding EditProfileCommand}" Width="80" />
+                                    <Button Style="{StaticResource SecondaryButtonStyle}" Content="设为默认"
+                                            Command="{Binding SetDefaultProfileCommand}" Margin="8,0,0,0" />
+                                    <Button Style="{StaticResource SecondaryButtonStyle}"
+                                            Content="{Binding IsTesting, Converter={StaticResource TestTextConverter}, ConverterParameter=test}"
+                                            Command="{Binding TestProfileCommand}"
+                                            IsEnabled="{Binding IsTesting, Converter={StaticResource InverseBoolConverter}}"
+                                            Margin="8,0,0,0" />
+                                </StackPanel>
+                                <TextBlock Text="{Binding TestResult}" FontSize="12" Margin="0,10,0,0"
+                                           Foreground="{DynamicResource SecondaryTextBrush}" />
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- ============ 偏好设置 ============ -->
+            <Border Background="{DynamicResource CardBackgroundBrush}"
+                    BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
+                    CornerRadius="16" Padding="20,18" Margin="0,16,0,0">
+                <StackPanel>
+                    <TextBlock Text="偏好设置" FontSize="17" FontWeight="Bold"
+                               Foreground="{DynamicResource PrimaryTextBrush}" />
+                    <TextBlock Text="所有更改即时生效" FontSize="12"
+                               Foreground="{DynamicResource SecondaryTextBrush}" Margin="0,4,0,0" />
+
+                    <TextBlock Text="语言 / Language" FontSize="12" FontWeight="SemiBold"
+                               Foreground="{DynamicResource PrimaryTextBrush}" Margin="0,14,0,8" />
+                    <WrapPanel>
+                        <RadioButton GroupName="LangPanel" Content="简体中文"
+                                     IsChecked="{Binding SelectedLanguage, Converter={StaticResource StringEqualsBoolConverter}, ConverterParameter=zh-CN, Mode=TwoWay}"
+                                     Foreground="{DynamicResource PrimaryTextBrush}" VerticalAlignment="Center" Margin="0,0,20,0" />
+                        <RadioButton GroupName="LangPanel" Content="English"
+                                     IsChecked="{Binding SelectedLanguage, Converter={StaticResource StringEqualsBoolConverter}, ConverterParameter=en-US, Mode=TwoWay}"
+                                     Foreground="{DynamicResource PrimaryTextBrush}" VerticalAlignment="Center" />
+                    </WrapPanel>
+
+                    <TextBlock Text="界面主题" FontSize="12" FontWeight="SemiBold"
+                               Foreground="{DynamicResource PrimaryTextBrush}" Margin="0,14,0,8" />
+                    <WrapPanel>
+                        <RadioButton GroupName="ThemePanel" Content="浅色"
+                                     IsChecked="{Binding SelectedTheme, Converter={StaticResource StringEqualsBoolConverter}, ConverterParameter=Light, Mode=TwoWay}"
+                                     Foreground="{DynamicResource PrimaryTextBrush}" VerticalAlignment="Center" Margin="0,0,20,0" />
+                        <RadioButton GroupName="ThemePanel" Content="深色"
+                                     IsChecked="{Binding SelectedTheme, Converter={StaticResource StringEqualsBoolConverter}, ConverterParameter=Dark, Mode=TwoWay}"
+                                     Foreground="{DynamicResource PrimaryTextBrush}" VerticalAlignment="Center" />
+                    </WrapPanel>
+
+                    <TextBlock Text="导航栏位置" FontSize="12" FontWeight="SemiBold"
+                               Foreground="{DynamicResource PrimaryTextBrush}" Margin="0,14,0,8" />
+                    <WrapPanel>
+                        <RadioButton GroupName="SidebarPanel" Content="左侧"
+                                     IsChecked="{Binding SelectedSidebar, Converter={StaticResource StringEqualsBoolConverter}, ConverterParameter=Left, Mode=TwoWay}"
+                                     Foreground="{DynamicResource PrimaryTextBrush}" VerticalAlignment="Center" Margin="0,0,20,0" />
+                        <RadioButton GroupName="SidebarPanel" Content="右侧"
+                                     IsChecked="{Binding SelectedSidebar, Converter={StaticResource StringEqualsBoolConverter}, ConverterParameter=Right, Mode=TwoWay}"
+                                     Foreground="{DynamicResource PrimaryTextBrush}" VerticalAlignment="Center" />
+                    </WrapPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- ============ 关于与更新 ============ -->
+            <Border Background="{DynamicResource CardBackgroundBrush}"
+                    BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
+                    CornerRadius="16" Padding="20,18" Margin="0,16,0,0">
+                <StackPanel>
+                    <TextBlock Text="关于与更新" FontSize="17" FontWeight="Bold"
+                               Foreground="{DynamicResource PrimaryTextBrush}" />
+                    <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                        <TextBlock Text="GuideCraft v" FontSize="12" Foreground="{DynamicResource SecondaryTextBrush}" />
+                        <TextBlock Text="{Binding VersionText}" FontSize="12" Foreground="{DynamicResource SecondaryTextBrush}" />
+                        <TextBlock Text=" · 引导式AI助手" FontSize="12" Foreground="{DynamicResource SecondaryTextBrush}" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+                        <Button Style="{StaticResource SecondaryButtonStyle}"
+                                Content="{Binding IsCheckingUpdate, Converter={StaticResource TestTextConverter}, ConverterParameter=update}"
+                                Command="{Binding CheckUpdateCommand}"
+                                IsEnabled="{Binding IsCheckingUpdate, Converter={StaticResource InverseBoolConverter}}" />
+                        <Button Style="{StaticResource PrimaryButtonStyle}" Content="下载新版本"
+                                Command="{Binding OpenReleaseCommand}"
+                                Visibility="{Binding HasUpdate, Converter={StaticResource BoolToVisibilityConverter}}"
+                                Margin="8,0,0,0" />
+                    </StackPanel>
+                    <TextBlock Text="{Binding UpdateStatus}" FontSize="12" Margin="0,8,0,0"
+                               Foreground="{DynamicResource SecondaryTextBrush}" TextWrapping="Wrap" />
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>
