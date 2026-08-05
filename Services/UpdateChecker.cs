@@ -23,22 +23,26 @@ public sealed class UpdateChecker : IUpdateChecker
     public UpdateChecker(HttpClient http)
     {
         _http = http;
-        _http.Timeout = TimeSpan.FromSeconds(20);
+        // 注意：不修改共享 HttpClient 的 Timeout（LlmApiClient 依赖其 5 分钟长超时做流式对话），
+        // 改用请求级 CancellationTokenSource 实现 20 秒检查超时。
     }
 
     public async Task<UpdateCheckResult> CheckAsync(CancellationToken ct = default)
     {
         try
         {
+            using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+            timeoutCts.CancelAfter(TimeSpan.FromSeconds(20));
+
             using var req = new HttpRequestMessage(HttpMethod.Get, $"https://api.github.com/repos/{Repo}/releases/latest");
             req.Headers.UserAgent.ParseAdd("GuideCraft");
             req.Headers.Accept.ParseAdd("application/vnd.github+json");
 
-            using var resp = await _http.SendAsync(req, ct);
+            using var resp = await _http.SendAsync(req, timeoutCts.Token);
             if (!resp.IsSuccessStatusCode)
                 return new UpdateCheckResult(false, null, null, $"HTTP {(int)resp.StatusCode}");
 
-            var json = await resp.Content.ReadAsStringAsync(ct);
+            var json = await resp.Content.ReadAsStringAsync(timeoutCts.Token);
             using var doc = JsonDocument.Parse(json);
             var tag = doc.RootElement.TryGetProperty("tag_name", out var t) ? t.GetString() : null;
             var url = doc.RootElement.TryGetProperty("html_url", out var h) ? h.GetString() : null;

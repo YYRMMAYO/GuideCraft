@@ -230,28 +230,41 @@ public partial class MainViewModel : ObservableObject
         var t = userText.Trim().ToLowerInvariant();
         var p = GuideProgress;
 
+        // 用户授权 AI 决定（"你看着办"等）→ 视为全部维度已收集（与澄清 prompt 的"由你决定"规则一致）
+        if (t.Contains("你决定") || t.Contains("你看着办") || t.Contains("你定")
+            || t.Contains("随便") || t.Contains("都行") || t.Contains("你帮我决定"))
+        {
+            foreach (RequirementDimension d in Enum.GetValues<RequirementDimension>())
+                p.MarkCaptured(d);
+            goto Sync;
+        }
+
         // 目标维度：包含"我要/我想/希望/需要/做/自动化/整理/生成/抓取/监控/提取/转换"等目标动词
         if (t.Contains("我要") || t.Contains("我想") || t.Contains("希望") || t.Contains("帮我")
             || t.Contains("做") || t.Contains("自动") || t.Contains("整理") || t.Contains("生成")
-            || t.Contains("抓取") || t.Contains("监控") || t.Contains("提取") || t.Contains("转换"))
+            || t.Contains("抓取") || t.Contains("监控") || t.Contains("提取") || t.Contains("转换")
+            || t.Contains("汇总") || t.Contains("统计") || t.Contains("备份") || t.Contains("清理"))
             p.MarkCaptured(RequirementDimension.Goal);
 
         // 输入来源：excel/csv/数据库/网页/邮箱/api/文件/目录/爬取等
         if (t.Contains("excel") || t.Contains("csv") || t.Contains("数据库") || t.Contains("网页")
             || t.Contains("邮箱") || t.Contains("邮件") || t.Contains("api") || t.Contains("接口")
-            || t.Contains("文件") || t.Contains("目录") || t.Contains("爬") || t.Contains("抓取"))
+            || t.Contains("文件") || t.Contains("目录") || t.Contains("爬") || t.Contains("抓取")
+            || t.Contains("读取") || t.Contains("导入") || t.Contains("粘贴"))
             p.MarkCaptured(RequirementDimension.InputSource);
 
         // 输出形式：表格/图表/文件/报告/邮件/推送/消息/网页/控制台等
         if (t.Contains("表格") || t.Contains("图表") || t.Contains("文件") || t.Contains("报告")
             || t.Contains("邮件") || t.Contains("推送") || t.Contains("消息") || t.Contains("通知")
-            || t.Contains("网页") || t.Contains("控制台") || t.Contains("打印") || t.Contains("保存"))
+            || t.Contains("网页") || t.Contains("控制台") || t.Contains("打印") || t.Contains("保存")
+            || t.Contains("导出") || t.Contains("生成"))
             p.MarkCaptured(RequirementDimension.Output);
 
         // 触发方式：每天/每周/每月/定时/自动/监听/事件/实时/小时/分钟等
         if (t.Contains("每天") || t.Contains("每周") || t.Contains("每月") || t.Contains("定时")
-            || t.Contains("每天") || t.Contains("小时") || t.Contains("分钟") || t.Contains("监听")
-            || t.Contains("实时") || t.Contains("事件") || t.Contains("启动") || t.Contains("手动"))
+            || t.Contains("小时") || t.Contains("分钟") || t.Contains("监听")
+            || t.Contains("实时") || t.Contains("事件") || t.Contains("启动") || t.Contains("手动")
+            || t.Contains("开机") || t.Contains("常驻"))
             p.MarkCaptured(RequirementDimension.Trigger);
 
         // 环境：windows/mac/linux/服务器/内网/离线/联网/特定机器等
@@ -263,13 +276,13 @@ public partial class MainViewModel : ObservableObject
         // 技术背景：不懂/没经验/会一点/懂编程/写过/开发等
         if (t.Contains("不懂") || t.Contains("不会") || t.Contains("没经验") || t.Contains("小白")
             || t.Contains("会一点") || t.Contains("会些") || t.Contains("编程") || t.Contains("开发")
-            || t.Contains("写过") || t.Contains("经验"))
+            || t.Contains("写过") || t.Contains("经验") || t.Contains("不太懂"))
             p.MarkCaptured(RequirementDimension.SkillLevel);
 
         // 数据规模：几十/几百/几千/几万/大量/很多/百万/万行等
         if (t.Contains("几十") || t.Contains("几百") || t.Contains("几千") || t.Contains("几万")
             || t.Contains("大量") || t.Contains("很多") || t.Contains("百万") || t.Contains("万行")
-            || t.Contains("千行") || t.Contains("条") || t.Contains("数据"))
+            || t.Contains("千行") || t.Contains("上万") || t.Contains("海量") || t.Contains("所有"))
             p.MarkCaptured(RequirementDimension.DataScale);
 
         // 失败处理：跳过/继续/日志/提醒/报错/停止/忽略/重试等
@@ -278,6 +291,7 @@ public partial class MainViewModel : ObservableObject
             || t.Contains("失败") || t.Contains("错误"))
             p.MarkCaptured(RequirementDimension.FailureHandling);
 
+        Sync:
         OnPropertyChanged(nameof(GuideProgressPercent));
         OnPropertyChanged(nameof(GuidePhaseLabel));
         SyncGuideDimensions();
@@ -390,8 +404,11 @@ public partial class MainViewModel : ObservableObject
         if (Phase == ChatPhase.Idle) Phase = ChatPhase.Clarify;
         else if (Phase == ChatPhase.Confirm)
         {
-            if (_chat.IsConfirmReply(text)) Phase = ChatPhase.Generate;
-            else if (_chat.IsModifyReply(text)) Phase = ChatPhase.Clarify;
+            // 回复类型分类（CONFIRM / DENY / INFO）：
+            // 含修改/否定 → 回澄清；纯确认 → 生成；其余（补充信息）→ 回澄清继续收集
+            if (_chat.IsModifyReply(text)) Phase = ChatPhase.Clarify;
+            else if (_chat.IsConfirmReply(text)) Phase = ChatPhase.Generate;
+            else Phase = ChatPhase.Clarify;
         }
 
         if (Conversation.Title == "新对话" && !string.IsNullOrWhiteSpace(text))

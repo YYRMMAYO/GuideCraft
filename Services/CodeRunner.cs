@@ -68,7 +68,8 @@ public sealed class CodeRunner : ICodeRunner
     {
         "os", "subprocess", "shutil", "socket", "http", "urllib", "requests",
         "ctypes", "pickle", "shelve", "marshal", "socketserver", "telnetlib",
-        "ftplib", "imaplib", "smtplib", "webbrowser", "winreg", "crypt"
+        "ftplib", "imaplib", "smtplib", "webbrowser", "winreg", "crypt",
+        "importlib", "runpy", "pkgutil", "zipimport"
     };
 
     private static readonly string[] ForbiddenAttrs =
@@ -77,9 +78,12 @@ public sealed class CodeRunner : ICodeRunner
         "chmod", "rename", "replace", "truncate", "kill", "terminate"
     };
 
+    // 危险内建调用：除 eval/exec/compile 外，封堵动态加载/动态属性访问等沙盒逃逸入口
     private static readonly string[] ForbiddenCalls =
     {
-        "eval", "exec", "compile", "open", "input", "exit", "quit"
+        "eval", "exec", "compile", "open", "input", "exit", "quit",
+        "__import__", "import_module", "getattr", "setattr", "delattr",
+        "globals", "locals", "vars", "breakpoint"
     };
 
     public async Task<SandboxRunResult> RunPythonAsync(string code, int timeoutSeconds, CancellationToken ct = default)

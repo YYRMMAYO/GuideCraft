@@ -1,4 +1,5 @@
-﻿using System.Net.Http;
+﻿using System.IO;
+using System.Net.Http;
 using System.Windows;
 using System.Windows.Threading;
 using GuideCraft.Services;
@@ -103,7 +104,15 @@ public partial class App : Application
     /// <summary>XAML 解析异常等 UI 线程异常统一弹窗提示，避免闪退</summary>
     private void OnDispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
     {
-        try { System.IO.File.WriteAllText(@"G:\AIOP\.workbuddy\tmp\crash.txt", $"{e.Exception}\n\n{e.Exception.StackTrace}"); } catch { }
+        try
+        {
+            var crashDir = Path.Combine(Path.GetTempPath(), "GuideCraft");
+            Directory.CreateDirectory(crashDir);
+            System.IO.File.WriteAllText(
+                Path.Combine(crashDir, $"crash-{DateTime.Now:yyyyMMdd-HHmmss}.txt"),
+                $"{e.Exception}\n\n{e.Exception.StackTrace}");
+        }
+        catch { /* 日志写入失败不影响主流程 */ }
         MessageBox.Show(
             $"程序遇到问题：\n{e.Exception.Message}",
             UiStrings.AppTitle,

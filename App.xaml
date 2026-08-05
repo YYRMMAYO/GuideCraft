@@ -17,6 +17,7 @@
             <conv:TestTextConverter x:Key="TestTextConverter" />
             <conv:BoolToColumnConverter x:Key="BoolToColumnConverter" />
             <conv:LocalizedTextConverter x:Key="LocalizedTextConverter" />
+            <conv:NotNullConverter x:Key="NotNullConverter" />
             <conv:StringEqualsBoolConverter x:Key="StringEqualsBoolConverter" />
             <conv:PercentToWidthConverter x:Key="PercentToWidthConverter" />
         </ResourceDictionary>

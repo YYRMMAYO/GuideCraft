@@ -20,6 +20,9 @@ public enum SettingsTab
     About        // 关于更新
 }
 
+/// <summary>左侧导航项（Key 对应 SettingsTab，Name 为本地化标题）</summary>
+public sealed record SettingsNavItem(SettingsTab Tab, string Name);
+
 /// <summary>
 /// 设置页视图模型（模块化页面，非弹窗）：自定义模型配置 CRUD、语言/主题/导航栏位置、更新检查。
 /// 所有偏好即时保存，无需"保存"按钮。
@@ -45,17 +48,61 @@ public partial class SettingsViewModel : ObservableObject
         _sandboxTimeoutSeconds = settings.Settings.SandboxTimeoutSeconds;
         _showUsageStats = settings.Settings.ShowUsageStats;
         _showStatsPanel = settings.Settings.ShowStatsPanel;
+        RefreshNavItems();
         RefreshProfiles();
         RefreshStats();
     }
 
     // ---------- Tab 切换 ----------
 
+    /// <summary>左侧导航项（ListBox 数据驱动，避免 RadioButton+Converter 绑定回环；语言切换时刷新）</summary>
+    public ObservableCollection<SettingsNavItem> NavItems { get; } = new();
+
+    /// <summary>当前选中的导航项（ListBox.SelectedItem 双向绑定，天然互斥）</summary>
+    [ObservableProperty]
+    private SettingsNavItem? _activeNav;
+
+    partial void OnActiveNavChanged(SettingsNavItem? value)
+    {
+        if (value is not null)
+            ActiveTab = value.Tab;
+    }
+
     [ObservableProperty]
     private SettingsTab _activeTab;
 
+    partial void OnActiveTabChanged(SettingsTab value)
+    {
+        // 同步导航选中项（程序化 OpenAt 跳转时）
+        if (ActiveNav?.Tab != value)
+            ActiveNav = NavItems.FirstOrDefault(n => n.Tab == value);
+        OnPropertyChanged(nameof(SettingsHeaderTitle));
+        OnPropertyChanged(nameof(SettingsHeaderDesc));
+        if (value == SettingsTab.Stats)
+            RefreshStats();
+    }
+
     [RelayCommand]
     private void SwitchTab(SettingsTab tab) => ActiveTab = tab;
+
+    /// <summary>重建导航项（构造与语言切换时调用，保持本地化）</summary>
+    private void RefreshNavItems()
+    {
+        var currentTab = ActiveNav?.Tab ?? ActiveTab;
+        NavItems.Clear();
+        foreach (var item in new[]
+                 {
+                     new SettingsNavItem(SettingsTab.Models, LocalizationManager.Get("Str.SettingsNavModels")),
+                     new SettingsNavItem(SettingsTab.Appearance, LocalizationManager.Get("Str.SettingsNavAppearance")),
+                     new SettingsNavItem(SettingsTab.Language, LocalizationManager.Get("Str.SettingsNavLanguage")),
+                     new SettingsNavItem(SettingsTab.Layout, LocalizationManager.Get("Str.SettingsNavLayout")),
+                     new SettingsNavItem(SettingsTab.Agent, LocalizationManager.Get("Str.SettingsNavAgent")),
+                     new SettingsNavItem(SettingsTab.Stats, LocalizationManager.Get("Str.SettingsNavStats")),
+                     new SettingsNavItem(SettingsTab.About, LocalizationManager.Get("Str.SettingsNavAbout"))
+                 })
+            NavItems.Add(item);
+        ActiveNav = NavItems.FirstOrDefault(n => n.Tab == currentTab);
+    }
 
     /// <summary>窗口标题（随 Tab 变化）</summary>
     public string SettingsHeaderTitle => ActiveTab switch
@@ -80,14 +127,6 @@ public partial class SettingsViewModel : ObservableObject
         SettingsTab.Stats => LocalizationManager.Get("Str.SettingsHeaderStatsDesc"),
         _ => LocalizationManager.Get("Str.SettingsHeaderAboutDesc")
     };
-
-    partial void OnActiveTabChanged(SettingsTab value)
-    {
-        OnPropertyChanged(nameof(SettingsHeaderTitle));
-        OnPropertyChanged(nameof(SettingsHeaderDesc));
-        if (value == SettingsTab.Stats)
-            RefreshStats();
-    }
 
     /// <summary>关闭设置窗口（由窗口代码后台执行）</summary>
     [RelayCommand]
@@ -316,9 +355,12 @@ public partial class SettingsViewModel : ObservableObject
     {
         LocalizationManager.Apply(value);
         _settings.SaveLanguage(value);
+        RefreshNavItems();
         OnPropertyChanged(nameof(LanguageName));
         OnPropertyChanged(nameof(ThemeName));
         OnPropertyChanged(nameof(SidebarName));
+        OnPropertyChanged(nameof(SettingsHeaderTitle));
+        OnPropertyChanged(nameof(SettingsHeaderDesc));
     }
 
     public string LanguageName => SelectedLanguage == LocalizationManager.En ? "English" : "简体中文";
