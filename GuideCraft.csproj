@@ -9,7 +9,7 @@
     <InvariantGlobalization>false</InvariantGlobalization>
     <RootNamespace>GuideCraft</RootNamespace>
     <AssemblyName>GuideCraft</AssemblyName>
-    <Version>1.5.0</Version>
+    <Version>2.0.0</Version>
     <AssemblyTitle>GuideCraft</AssemblyTitle>
     <Product>GuideCraft · Guided AI Assistant</Product>
     <Description>Guided AI Assistant · Turn vague ideas into runnable Python automation through Q&amp;A. Supports Qwen / DeepSeek / bilingual UI.</Description>

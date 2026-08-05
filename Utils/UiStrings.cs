@@ -11,6 +11,16 @@ public static class UiStrings
 
     public static string ApiKeyInvalid => LocalizationManager.Get("Str.Chat.ApiKeyInvalid");
 
+    public static string ApiBadRequest => LocalizationManager.Get("Str.Chat.ApiBadRequest");
+
+    public static string ApiForbidden => LocalizationManager.Get("Str.Chat.ApiForbidden");
+
+    public static string ApiModelNotFound => LocalizationManager.Get("Str.Chat.ApiModelNotFound");
+
+    public static string ApiTooLarge => LocalizationManager.Get("Str.Chat.ApiTooLarge");
+
+    public static string ServiceUnavailable => LocalizationManager.Get("Str.Chat.ServiceUnavailable");
+
     public static string RateLimited => LocalizationManager.Get("Str.Chat.RateLimited");
 
     public static string ServerError => LocalizationManager.Get("Str.Chat.ServerError");
@@ -40,4 +50,24 @@ public static class UiStrings
     public static string ExportSuccess => LocalizationManager.Get("Str.ExportSuccess");
 
     public static string ExportFailed => LocalizationManager.Get("Str.ExportFailed");
+
+    // ---------- 沙盒试运行（v2.0） ----------
+
+    public static string SandboxRun => LocalizationManager.Get("Str.Sandbox.Run");
+
+    public static string SandboxRunning => LocalizationManager.Get("Str.Sandbox.Running");
+
+    public static string SandboxDone => LocalizationManager.Get("Str.Sandbox.Done");
+
+    public static string SandboxTimeout => LocalizationManager.Get("Str.Sandbox.Timeout");
+
+    public static string SandboxRejected => LocalizationManager.Get("Str.Sandbox.Rejected");
+
+    public static string SandboxNoOutput => LocalizationManager.Get("Str.Sandbox.NoOutput");
+
+    public static string SandboxFailed => LocalizationManager.Get("Str.Sandbox.Failed");
+
+    public static string SandboxDisabled => LocalizationManager.Get("Str.Sandbox.Disabled");
+
+    public static string SandboxClear => LocalizationManager.Get("Str.Sandbox.Clear");
 }

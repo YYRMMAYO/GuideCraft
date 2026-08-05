@@ -1,10 +1,12 @@
 ﻿using System.Windows;
 using System.Windows.Input;
 using GuideCraft.ViewModels;
+using GuideCraft.Views;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace GuideCraft;
 
-/// <summary>主窗口：对话为主 + 设置抽屉 + 屏幕边缘磁吸 + Esc 关闭抽屉</summary>
+/// <summary>主窗口：对话为主 + 独立设置窗口 + 屏幕边缘磁吸</summary>
 public partial class MainWindow : Window
 {
     private const int SnapThreshold = 14;
@@ -21,20 +23,19 @@ public partial class MainWindow : Window
         PreviewKeyDown += OnPreviewKeyDown;
     }
 
-    /// <summary>Esc 关闭设置抽屉</summary>
+    /// <summary>Esc 关闭独立设置窗口（若打开）</summary>
     private void OnPreviewKeyDown(object sender, KeyEventArgs e)
     {
-        if (e.Key == Key.Escape && _vm.IsSettingsOpen)
+        if (e.Key == Key.Escape)
         {
-            _vm.CloseSettingsCommand.Execute(null);
-            e.Handled = true;
+            var settingsWin = Application.Current.Windows
+                .OfType<SettingsWindow>().FirstOrDefault();
+            if (settingsWin is { IsVisible: true })
+            {
+                settingsWin.Close();
+                e.Handled = true;
+            }
         }
-    }
-
-    /// <summary>点击遮罩关闭设置抽屉</summary>
-    private void Overlay_OnMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
-    {
-        _vm.CloseSettingsCommand.Execute(null);
     }
 
     /// <summary>窗口拖动到屏幕工作区边缘（阈值内）自动磁吸</summary>

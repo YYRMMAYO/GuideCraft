@@ -77,46 +77,6 @@
             </Grid>
         </Grid>
 
-        <!-- ===================== 设置抽屉（覆盖层，用完关闭，对话始终为主） ===================== -->
-        <Grid x:Name="SettingsOverlay" Grid.RowSpan="2"
-              Visibility="{Binding IsSettingsOpen, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
-            <!-- 遮罩：点击关闭 -->
-            <Border Background="{DynamicResource OverlayBrush}" MouseLeftButtonDown="Overlay_OnMouseLeftButtonDown" />
-
-            <!-- 右侧抽屉面板（可拖拽宽度） -->
-            <Grid HorizontalAlignment="Right" RenderTransformOrigin="0.5,0.5">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="{Binding SettingsWidth, Mode=TwoWay}" MinWidth="380" MaxWidth="640" />
-                </Grid.ColumnDefinitions>
-                <GridSplitter Grid.Column="0" Width="4" HorizontalAlignment="Stretch"
-                              ResizeBehavior="PreviousAndNext" Background="Transparent" />
-                <Border Grid.Column="1" Background="{DynamicResource WindowBackgroundBrush}"
-                        BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1,0,0,0">
-                    <DockPanel>
-                        <!-- 抽屉头部 -->
-                        <Border DockPanel.Dock="Top" Background="{DynamicResource HeaderBackgroundBrush}"
-                                BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1"
-                                Padding="20,14">
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Text="设置" FontSize="17" FontWeight="Bold"
-                                           Foreground="{DynamicResource PrimaryTextBrush}" />
-                                <Button Grid.Column="1" Style="{StaticResource IconButtonStyle}" Content="✕"
-                                        Command="{Binding CloseSettingsCommand}"
-                                        ToolTip="关闭设置 (Esc)" />
-                            </Grid>
-                        </Border>
-                        <!-- 设置内容（Tab 分类） -->
-                        <views:SettingsPanel />
-                    </DockPanel>
-                </Border>
-            </Grid>
-        </Grid>
-
         <!-- ===================== 首次引导教程（覆盖层 + 关闭按钮可点） ===================== -->
         <Grid x:Name="WelcomeOverlay" Grid.RowSpan="2"
               Visibility="{Binding IsWelcomeVisible, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">

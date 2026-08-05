@@ -8,13 +8,15 @@ using GuideCraft.Services;
 
 namespace GuideCraft.ViewModels;
 
-/// <summary>设置抽屉 Tab 分类</summary>
+/// <summary>设置窗口 Tab 分类</summary>
 public enum SettingsTab
 {
     Models,      // 模型配置
     Appearance,  // 外观
     Language,    // 语言
     Layout,      // 布局
+    Agent,       // Agent 行为
+    Stats,       // 用量统计
     About        // 关于更新
 }
 
@@ -27,17 +29,24 @@ public partial class SettingsViewModel : ObservableObject
     private readonly ISettingsService _settings;
     private readonly IModelProfileService _profiles;
     private readonly IUpdateChecker _updateChecker;
+    private readonly IUsageTracker _usage;
 
-    public SettingsViewModel(ISettingsService settings, IModelProfileService profiles, IUpdateChecker updateChecker)
+    public SettingsViewModel(ISettingsService settings, IModelProfileService profiles, IUpdateChecker updateChecker, IUsageTracker usage)
     {
         _settings = settings;
         _profiles = profiles;
         _updateChecker = updateChecker;
+        _usage = usage;
 
         _selectedLanguage = settings.Settings.Language;
         _selectedTheme = settings.Settings.Theme;
         _selectedSidebar = settings.Settings.SidebarPosition;
+        _sandboxEnabled = settings.Settings.SandboxEnabled;
+        _sandboxTimeoutSeconds = settings.Settings.SandboxTimeoutSeconds;
+        _showUsageStats = settings.Settings.ShowUsageStats;
+        _showStatsPanel = settings.Settings.ShowStatsPanel;
         RefreshProfiles();
+        RefreshStats();
     }
 
     // ---------- Tab 切换 ----------
@@ -47,6 +56,47 @@ public partial class SettingsViewModel : ObservableObject
 
     [RelayCommand]
     private void SwitchTab(SettingsTab tab) => ActiveTab = tab;
+
+    /// <summary>窗口标题（随 Tab 变化）</summary>
+    public string SettingsHeaderTitle => ActiveTab switch
+    {
+        SettingsTab.Models => LocalizationManager.Get("Str.SettingsHeaderModels"),
+        SettingsTab.Appearance => LocalizationManager.Get("Str.SettingsHeaderAppearance"),
+        SettingsTab.Language => LocalizationManager.Get("Str.SettingsHeaderLanguage"),
+        SettingsTab.Layout => LocalizationManager.Get("Str.SettingsHeaderLayout"),
+        SettingsTab.Agent => LocalizationManager.Get("Str.SettingsHeaderAgent"),
+        SettingsTab.Stats => LocalizationManager.Get("Str.SettingsHeaderStats"),
+        _ => LocalizationManager.Get("Str.SettingsHeaderAbout")
+    };
+
+    /// <summary>窗口副标题（随 Tab 变化）</summary>
+    public string SettingsHeaderDesc => ActiveTab switch
+    {
+        SettingsTab.Models => LocalizationManager.Get("Str.SettingsHeaderModelsDesc"),
+        SettingsTab.Appearance => LocalizationManager.Get("Str.SettingsHeaderAppearanceDesc"),
+        SettingsTab.Language => LocalizationManager.Get("Str.SettingsHeaderLanguageDesc"),
+        SettingsTab.Layout => LocalizationManager.Get("Str.SettingsHeaderLayoutDesc"),
+        SettingsTab.Agent => LocalizationManager.Get("Str.SettingsHeaderAgentDesc"),
+        SettingsTab.Stats => LocalizationManager.Get("Str.SettingsHeaderStatsDesc"),
+        _ => LocalizationManager.Get("Str.SettingsHeaderAboutDesc")
+    };
+
+    partial void OnActiveTabChanged(SettingsTab value)
+    {
+        OnPropertyChanged(nameof(SettingsHeaderTitle));
+        OnPropertyChanged(nameof(SettingsHeaderDesc));
+        if (value == SettingsTab.Stats)
+            RefreshStats();
+    }
+
+    /// <summary>关闭设置窗口（由窗口代码后台执行）</summary>
+    [RelayCommand]
+    private void CloseWindow() => System.Windows.Application.Current.Dispatcher.Invoke(() =>
+    {
+        var win = System.Windows.Application.Current.Windows
+            .OfType<GuideCraft.Views.SettingsWindow>().FirstOrDefault();
+        win?.Close();
+    });
 
     // ---------- 模型配置管理 ----------
 
@@ -85,22 +135,38 @@ public partial class SettingsViewModel : ObservableObject
     [ObservableProperty]
     private bool _isEditing;
 
-    /// <summary>可用的提供方预设（新增时选择）</summary>
-    public IReadOnlyList<string> ProviderPresets { get; } = new[] { "Qwen", "DeepSeek", "Custom" };
+    /// <summary>可用的提供方预设（新增时选择，来自模型目录）</summary>
+    public IReadOnlyList<string> ProviderPresets { get; } =
+        LlmCatalog.Providers.Select(p => p.ToString()).ToArray();
 
     /// <summary>模型预设提示（随提供方变化）</summary>
-    public string ModelPresetHint => EditProvider switch
+    public string ModelPresetHint
     {
-        "Qwen" => "如 qwen-plus / qwen-turbo / qwen-max / qwen-flash",
-        "DeepSeek" => "如 deepseek-v4-flash / deepseek-v4-pro",
-        _ => "任意 OpenAI 兼容模型 ID"
-    };
+        get
+        {
+            if (!Enum.TryParse<LlmProvider>(EditProvider, out var provider)) return "任意 OpenAI 兼容模型 ID";
+            var models = LlmCatalog.ByProvider(provider);
+            if (models.Count == 0) return "任意 OpenAI 兼容模型 ID";
+            return "如 " + string.Join(" / ", models.Take(4).Select(m => m.Id)) + (models.Count > 4 ? " 等" : string.Empty);
+        }
+    }
 
     partial void OnEditProviderChanged(string value)
     {
-        if (value == "Qwen") EditBaseUrl = "https://dashscope.aliyuncs.com/compatible-mode/v1";
-        else if (value == "DeepSeek") EditBaseUrl = "https://api.deepseek.com";
-        else EditBaseUrl = "https://";
+        if (Enum.TryParse<LlmProvider>(value, out var provider))
+        {
+            var first = LlmCatalog.ByProvider(provider).FirstOrDefault();
+            if (first is not null)
+            {
+                EditBaseUrl = first.BaseUrl;
+                if (string.IsNullOrEmpty(EditModelId) || !string.Equals(EditModelId, "qwen-plus", StringComparison.OrdinalIgnoreCase))
+                    EditModelId = first.Id;
+            }
+            else if (provider == LlmProvider.Custom)
+            {
+                EditBaseUrl = "https://";
+            }
+        }
         OnPropertyChanged(nameof(ModelPresetHint));
     }
 
@@ -285,6 +351,61 @@ public partial class SettingsViewModel : ObservableObject
 
     public string SidebarName => LocalizationManager.Get(SelectedSidebar == "Left"
         ? "Str.SettingsSidebarLeft" : "Str.SettingsSidebarRight");
+
+    // ---------- Agent 行为设置（沙盒 / 用量统计） ----------
+
+    [ObservableProperty]
+    private bool _sandboxEnabled;
+
+    [ObservableProperty]
+    private int _sandboxTimeoutSeconds = 30;
+
+    [ObservableProperty]
+    private bool _showUsageStats;
+
+    [ObservableProperty]
+    private bool _showStatsPanel;
+
+    public IReadOnlyList<int> SandboxTimeoutOptions { get; } = new[] { 10, 20, 30, 60, 120 };
+
+    partial void OnSandboxEnabledChanged(bool value) => _settings.SaveSandboxEnabled(value);
+
+    partial void OnSandboxTimeoutSecondsChanged(int value) => _settings.SaveSandboxTimeout(value);
+
+    partial void OnShowUsageStatsChanged(bool value) => _settings.SaveShowUsageStats(value);
+
+    partial void OnShowStatsPanelChanged(bool value) => _settings.SaveShowStatsPanel(value);
+
+    // ---------- 用量统计（来自 UsageTracker） ----------
+
+    public IUsageTracker Usage => _usage;
+
+    /// <summary>累计统计（供统计页绑定）</summary>
+    public UsageTotals UsageTotalsView => _usage.GetTotals();
+
+    /// <summary>最近 14 天记录（供统计页绑定）</summary>
+    public IReadOnlyList<UsageRecord> UsageRecentView => _usage.GetRecent(14);
+
+    /// <summary>整体缓存命中率显示（"82.5%" 或 "—"）</summary>
+    public string UsageCacheRateDisplay => _usage.GetCacheHitRate() is { } r ? $"{r:F1}%" : "—";
+
+    /// <summary>统计汇总文本（缓存命中率与费用）</summary>
+    [ObservableProperty]
+    private string _statsSummary = string.Empty;
+
+    /// <summary>刷新统计页（切到统计 Tab 或点击刷新按钮时调用）</summary>
+    [RelayCommand]
+    private void RefreshStats()
+    {
+        var totals = _usage.GetTotals();
+        OnPropertyChanged(nameof(Usage));
+        OnPropertyChanged(nameof(UsageTotalsView));
+        OnPropertyChanged(nameof(UsageRecentView));
+        OnPropertyChanged(nameof(UsageCacheRateDisplay));
+        StatsSummary = totals.CacheHitRate is { } rate
+            ? $"{totals.RequestCount} 次请求 · {totals.TotalTokens:N0} tokens · 缓存命中 {rate:F1}% · 预估费用 ¥{totals.EstimatedCost:F4}"
+            : $"{totals.RequestCount} 次请求 · {totals.TotalTokens:N0} tokens · 预估费用 ¥{totals.EstimatedCost:F4}";
+    }
 
     // ---------- 更新检查 ----------
 

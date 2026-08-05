@@ -16,7 +16,8 @@ public interface ILlmClient
         string apiKey,
         string baseUrl,
         string model,
-        CancellationToken ct = default);
+        CancellationToken ct = default,
+        int? maxTokens = null);
 
     /// <summary>流式对话：增量文本经 onDelta 输出；调用结束后可选经 onUsage 返回用量（缓存命中/费用估算数据）</summary>
     Task StreamChatAsync(
@@ -27,7 +28,8 @@ public interface ILlmClient
         string model,
         bool includeUsage = true,
         Action<UsageInfo>? onUsage = null,
-        CancellationToken ct = default);
+        CancellationToken ct = default,
+        int? maxTokens = null);
 }
 
 /// <summary>API 调用异常（含状态码，便于 UI 映射本地化提示）</summary>
@@ -63,14 +65,15 @@ public sealed class LlmApiClient : ILlmClient
         string apiKey,
         string baseUrl,
         string model,
-        CancellationToken ct = default)
+        CancellationToken ct = default,
+        int? maxTokens = null)
     {
         var sb = new StringBuilder();
         await StreamChatAsync(messages, delta =>
         {
             sb.Append(delta);
             return Task.CompletedTask;
-        }, apiKey, baseUrl, model, includeUsage: false, onUsage: null, ct: ct);
+        }, apiKey, baseUrl, model, includeUsage: false, onUsage: null, ct: ct, maxTokens: maxTokens);
         return sb.ToString();
     }
 
@@ -82,7 +85,8 @@ public sealed class LlmApiClient : ILlmClient
         string model,
         bool includeUsage = true,
         Action<UsageInfo>? onUsage = null,
-        CancellationToken ct = default)
+        CancellationToken ct = default,
+        int? maxTokens = null)
     {
         if (string.IsNullOrWhiteSpace(apiKey))
             throw new LlmApiException(401, "Missing API Key");
@@ -90,7 +94,7 @@ public sealed class LlmApiClient : ILlmClient
             throw new LlmApiException(400, "Invalid base URL or model");
 
         var url = baseUrl.TrimEnd('/') + EndpointSuffix;
-        var payload = BuildPayload(messages, model, includeUsage);
+        var payload = BuildPayload(messages, model, includeUsage, maxTokens);
         using var req = new HttpRequestMessage(HttpMethod.Post, url);
         req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
         req.Content = new StringContent(
@@ -116,47 +120,86 @@ public sealed class LlmApiClient : ILlmClient
         using (resp)
         {
             if (!resp.IsSuccessStatusCode)
-                throw new LlmApiException((int)resp.StatusCode, $"HTTP {(int)resp.StatusCode}");
-
-            await using var stream = await resp.Content.ReadAsStreamAsync(ct);
-            using var reader = new StreamReader(stream, Encoding.UTF8);
-
-            while (!ct.IsCancellationRequested)
             {
-                var line = await reader.ReadLineAsync(ct);
-                if (line is null) break;                      // 流正常结束
-                if (string.IsNullOrWhiteSpace(line)) continue; // 心跳空行
-                if (line.StartsWith(':')) continue;           // keep-alive 注释行（排队等待时必现，跳过！）
-                if (!line.StartsWith("data:")) continue;      // 忽略其它行
-
-                var data = line.AsSpan(5).Trim().ToString();
-                if (data == "[DONE]") break;                  // 终止标记
-
-                // 逐行解析 JSON；单行 data 完整，按行边界解析安全
-                using var doc = JsonDocument.Parse(data);
-                var root = doc.RootElement;
-
-                // usage chunk（include_usage 开启时 [DONE] 前出现；choices 为空数组）
-                if (includeUsage && root.TryGetProperty("usage", out var usageElem))
+                var status = (int)resp.StatusCode;
+                // 429/5xx 重试一次（指数退避，避免限流与临时故障中断对话）
+                if (status == 429 || status >= 500)
                 {
-                    var usage = ParseUsage(usageElem);
-                    if (usage is not null)
-                        onUsage?.Invoke(usage);
-                    continue;
+                    await Task.Delay(1200, ct);
+                    using var retryReq = new HttpRequestMessage(HttpMethod.Post, url);
+                    retryReq.Headers.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
+                    retryReq.Content = new StringContent(
+                        JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
+                    try
+                    {
+                        var retryResp = await _http.SendAsync(retryReq, HttpCompletionOption.ResponseHeadersRead, ct);
+                        using (retryResp)
+                        {
+                            if (!retryResp.IsSuccessStatusCode)
+                                throw new LlmApiException((int)retryResp.StatusCode, $"HTTP {(int)retryResp.StatusCode}");
+                            await ReadStreamAsync(retryResp, onDelta, includeUsage, onUsage, ct);
+                        }
+                        return;
+                    }
+                    catch (LlmApiException) { throw; }
+                    catch (TaskCanceledException) when (!ct.IsCancellationRequested)
+                    {
+                        throw new LlmApiException(408, "Request timed out");
+                    }
                 }
+                throw new LlmApiException(status, $"HTTP {status}");
+            }
 
-                if (!root.TryGetProperty("choices", out var choices)
-                    || choices.GetArrayLength() == 0)
-                    continue;                                 // 空 choices（如错误 chunk）
+            await ReadStreamAsync(resp, onDelta, includeUsage, onUsage, ct);
+        }
+    }
 
-                var delta = choices[0].GetProperty("delta");
-                if (delta.TryGetProperty("content", out var c)
-                    && c.ValueKind == JsonValueKind.String)
-                {
-                    var text = c.GetString() ?? string.Empty;
-                    if (text.Length > 0)
-                        await onDelta(text);
-                }
+    /// <summary>读取 SSE 流并解析 delta / usage</summary>
+    private static async Task ReadStreamAsync(
+        HttpResponseMessage resp,
+        Func<string, Task> onDelta,
+        bool includeUsage,
+        Action<UsageInfo>? onUsage,
+        CancellationToken ct)
+    {
+        await using var stream = await resp.Content.ReadAsStreamAsync(ct);
+        using var reader = new StreamReader(stream, Encoding.UTF8);
+
+        while (!ct.IsCancellationRequested)
+        {
+            var line = await reader.ReadLineAsync(ct);
+            if (line is null) break;                      // 流正常结束
+            if (string.IsNullOrWhiteSpace(line)) continue; // 心跳空行
+            if (line.StartsWith(':')) continue;           // keep-alive 注释行（排队等待时必现，跳过！）
+            if (!line.StartsWith("data:")) continue;      // 忽略其它行
+
+            var data = line.AsSpan(5).Trim().ToString();
+            if (data == "[DONE]") break;                  // 终止标记
+
+            // 逐行解析 JSON；单行 data 完整，按行边界解析安全
+            using var doc = JsonDocument.Parse(data);
+            var root = doc.RootElement;
+
+            // usage chunk（include_usage 开启时 [DONE] 前出现；choices 为空数组）
+            if (includeUsage && root.TryGetProperty("usage", out var usageElem))
+            {
+                var usage = ParseUsage(usageElem);
+                if (usage is not null)
+                    onUsage?.Invoke(usage);
+                continue;
+            }
+
+            if (!root.TryGetProperty("choices", out var choices)
+                || choices.GetArrayLength() == 0)
+                continue;                                 // 空 choices（如错误 chunk）
+
+            var delta = choices[0].GetProperty("delta");
+            if (delta.TryGetProperty("content", out var c)
+                && c.ValueKind == JsonValueKind.String)
+            {
+                var text = c.GetString() ?? string.Empty;
+                if (text.Length > 0)
+                    await onDelta(text);
             }
         }
     }
@@ -188,7 +231,7 @@ public sealed class LlmApiClient : ILlmClient
         }
     }
 
-    private static object BuildPayload(IReadOnlyList<ChatApiMessage> messages, string model, bool includeUsage)
+    private static object BuildPayload(IReadOnlyList<ChatApiMessage> messages, string model, bool includeUsage, int? maxTokens)
     {
         var msgs = messages
             .Where(m => !string.IsNullOrWhiteSpace(m.Content))
@@ -214,6 +257,9 @@ public sealed class LlmApiClient : ILlmClient
                 ["include_usage"] = true
             };
         }
+        // max_tokens：限制输出长度，防止生成超长内容浪费 token（性能优化）
+        if (maxTokens is > 0)
+            payload["max_tokens"] = maxTokens.Value;
         return payload;
     }
 }

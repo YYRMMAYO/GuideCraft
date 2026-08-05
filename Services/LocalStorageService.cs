@@ -14,6 +14,12 @@ public interface ILocalStorageService
     void DeleteConversation(string id);
     string? GetSetting(string key);
     void SetSetting(string key, string value);
+
+    /// <summary>读取会话压缩摘要（无则返回 null）</summary>
+    string? GetConversationSummary(string conversationId);
+
+    /// <summary>保存会话压缩摘要</summary>
+    void SaveConversationSummary(string conversationId, string summary);
 }
 
 /// <summary>SQLite 实现：敏感字段（标题/消息内容/代码/描述/需求文档）经 AES-GCM 字段级加密落盘</summary>
@@ -61,6 +67,11 @@ public sealed class LocalStorageService : ILocalStorageService
                 description          TEXT NOT NULL,
                 dependencies         TEXT NOT NULL,
                 requirement_document TEXT NOT NULL
+            );
+            CREATE TABLE IF NOT EXISTS conversation_summaries (
+                conversation_id TEXT PRIMARY KEY,
+                summary         TEXT NOT NULL,
+                updated_at      TEXT NOT NULL
             );
             CREATE TABLE IF NOT EXISTS settings (
                 key   TEXT PRIMARY KEY,
@@ -234,6 +245,7 @@ public sealed class LocalStorageService : ILocalStorageService
                  {
                      "DELETE FROM messages WHERE conversation_id = $id",
                      "DELETE FROM projects WHERE conversation_id = $id",
+                     "DELETE FROM conversation_summaries WHERE conversation_id = $id",
                      "DELETE FROM conversations WHERE id = $id"
                  })
         {
@@ -253,6 +265,30 @@ public sealed class LocalStorageService : ILocalStorageService
         cmd.CommandText = "SELECT value FROM settings WHERE key = $key";
         cmd.Parameters.AddWithValue("$key", key);
         return cmd.ExecuteScalar() as string;
+    }
+
+    public string? GetConversationSummary(string conversationId)
+    {
+        using var conn = Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = "SELECT summary FROM conversation_summaries WHERE conversation_id = $id";
+        cmd.Parameters.AddWithValue("$id", conversationId);
+        return cmd.ExecuteScalar() as string;
+    }
+
+    public void SaveConversationSummary(string conversationId, string summary)
+    {
+        using var conn = Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = """
+            INSERT INTO conversation_summaries (conversation_id, summary, updated_at)
+            VALUES ($id, $summary, $ts)
+            ON CONFLICT(conversation_id) DO UPDATE SET summary = $summary, updated_at = $ts
+            """;
+        cmd.Parameters.AddWithValue("$id", conversationId);
+        cmd.Parameters.AddWithValue("$summary", summary);
+        cmd.Parameters.AddWithValue("$ts", DateTime.Now.ToString("O"));
+        cmd.ExecuteNonQuery();
     }
 
     public void SetSetting(string key, string value)

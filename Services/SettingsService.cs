@@ -29,6 +29,18 @@ public interface ISettingsService
     /// <summary>保存导航栏位置</summary>
     void SaveSidebarPosition(string position);
 
+    /// <summary>保存沙盒开关</summary>
+    void SaveSandboxEnabled(bool enabled);
+
+    /// <summary>保存沙盒超时秒数</summary>
+    void SaveSandboxTimeout(int seconds);
+
+    /// <summary>保存用量统计显示开关</summary>
+    void SaveShowUsageStats(bool show);
+
+    /// <summary>保存统计面板开关</summary>
+    void SaveShowStatsPanel(bool show);
+
     /// <summary>标记首次引导已展示</summary>
     void MarkWelcomeShown();
 
@@ -45,6 +57,10 @@ public sealed class SettingsService : ISettingsService
     private const string KeyLanguage = "language";
     private const string KeySidebar = "sidebar_position";
     private const string KeyWelcomeShown = "welcome_shown";
+    private const string KeySandboxEnabled = "sandbox_enabled";
+    private const string KeySandboxTimeout = "sandbox_timeout";
+    private const string KeyShowUsageStats = "show_usage_stats";
+    private const string KeyShowStatsPanel = "show_stats_panel";
 
     private readonly ILocalStorageService _storage;
     private readonly ILlmClient _api;
@@ -69,7 +85,11 @@ public sealed class SettingsService : ISettingsService
                 Theme = _storage.GetSetting(KeyTheme) ?? "Light",
                 Language = _storage.GetSetting(KeyLanguage) ?? "zh-CN",
                 SidebarPosition = _storage.GetSetting(KeySidebar) ?? "Right",
-                WelcomeShown = _storage.GetSetting(KeyWelcomeShown) == "1"
+                WelcomeShown = _storage.GetSetting(KeyWelcomeShown) == "1",
+                SandboxEnabled = _storage.GetSetting(KeySandboxEnabled) is not "0",
+                SandboxTimeoutSeconds = int.TryParse(_storage.GetSetting(KeySandboxTimeout), out var t) && t > 0 ? t : 30,
+                ShowUsageStats = _storage.GetSetting(KeyShowUsageStats) is not "0",
+                ShowStatsPanel = _storage.GetSetting(KeyShowStatsPanel) == "1"
             };
             return _cache;
         }
@@ -111,6 +131,31 @@ public sealed class SettingsService : ISettingsService
         if (position is not ("Left" or "Right")) return;
         _storage.SetSetting(KeySidebar, position);
         Settings.SidebarPosition = position;
+    }
+
+    public void SaveSandboxEnabled(bool enabled)
+    {
+        _storage.SetSetting(KeySandboxEnabled, enabled ? "1" : "0");
+        Settings.SandboxEnabled = enabled;
+    }
+
+    public void SaveSandboxTimeout(int seconds)
+    {
+        if (seconds <= 0) return;
+        _storage.SetSetting(KeySandboxTimeout, seconds.ToString());
+        Settings.SandboxTimeoutSeconds = seconds;
+    }
+
+    public void SaveShowUsageStats(bool show)
+    {
+        _storage.SetSetting(KeyShowUsageStats, show ? "1" : "0");
+        Settings.ShowUsageStats = show;
+    }
+
+    public void SaveShowStatsPanel(bool show)
+    {
+        _storage.SetSetting(KeyShowStatsPanel, show ? "1" : "0");
+        Settings.ShowStatsPanel = show;
     }
 
     public void MarkWelcomeShown()

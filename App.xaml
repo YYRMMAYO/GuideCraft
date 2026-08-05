@@ -18,6 +18,7 @@
             <conv:BoolToColumnConverter x:Key="BoolToColumnConverter" />
             <conv:LocalizedTextConverter x:Key="LocalizedTextConverter" />
             <conv:StringEqualsBoolConverter x:Key="StringEqualsBoolConverter" />
+            <conv:PercentToWidthConverter x:Key="PercentToWidthConverter" />
         </ResourceDictionary>
     </Application.Resources>
 </Application>

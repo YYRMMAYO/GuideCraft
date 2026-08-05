@@ -5,12 +5,87 @@
     <!-- ============ 对话区（主界面，纯净：仅消息 + 输入） ============ -->
     <Grid>
         <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
+        <!-- ============ 引导进度条（Agent 状态机可视化） ============ -->
+        <Border Grid.Row="0" Background="{DynamicResource HeaderBackgroundBrush}"
+                BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1"
+                Padding="20,10" Visibility="{Binding HasMessages, Converter={StaticResource BoolToVisibilityConverter}}">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="3" />
+                </Grid.RowDefinitions>
+                <Grid Grid.Row="0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <!-- 阶段徽章 -->
+                    <Border Grid.Column="0" Background="{DynamicResource SelectedBackgroundBrush}"
+                            CornerRadius="8" Padding="10,4" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding GuidePhaseLabel}" FontSize="11" FontWeight="SemiBold"
+                                   Foreground="{DynamicResource AccentBrush}" />
+                    </Border>
+
+                    <!-- 维度进度点 -->
+                    <ItemsControl Grid.Column="1" ItemsSource="{Binding GuideDimensions}"
+                                  Margin="16,0,16,0" VerticalAlignment="Center">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Orientation="Horizontal" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border x:Name="DimDot" Background="{DynamicResource InputBorderBrush}"
+                                        CornerRadius="6" Padding="8,4" Margin="0,0,6,0">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock x:Name="DimIcon" Text="{Binding Icon}" FontSize="10" Margin="0,0,4,0" />
+                                        <TextBlock x:Name="DimLabel" Text="{Binding Label}" FontSize="10"
+                                                   Foreground="{DynamicResource TertiaryTextBrush}" />
+                                    </StackPanel>
+                                </Border>
+                                <DataTemplate.Triggers>
+                                    <DataTrigger Binding="{Binding IsCaptured}" Value="True">
+                                        <Setter TargetName="DimDot" Property="Background" Value="{DynamicResource SelectedBackgroundBrush}" />
+                                        <Setter TargetName="DimLabel" Property="Foreground" Value="{DynamicResource AccentBrush}" />
+                                        <Setter TargetName="DimLabel" Property="FontWeight" Value="SemiBold" />
+                                    </DataTrigger>
+                                </DataTemplate.Triggers>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <!-- 百分比 -->
+                    <TextBlock Grid.Column="2" FontSize="11" FontWeight="SemiBold"
+                               Foreground="{DynamicResource SecondaryTextBrush}" VerticalAlignment="Center"
+                               Text="{Binding GuideProgressPercent, StringFormat={}{0:F0}%}" />
+                </Grid>
+
+                <!-- 底部进度条（动画填充） -->
+                <Grid Grid.Row="1" Margin="0,8,0,0">
+                    <Border Background="{DynamicResource InputBorderBrush}" CornerRadius="1.5" />
+                    <Border x:Name="ProgressFill" Background="{DynamicResource AccentBrush}" CornerRadius="1.5"
+                            HorizontalAlignment="Left">
+                        <Border.Width>
+                            <MultiBinding Converter="{StaticResource PercentToWidthConverter}">
+                                <Binding Path="GuideProgressPercent" />
+                                <Binding ElementName="ProgressBarHost" Path="ActualWidth" />
+                            </MultiBinding>
+                        </Border.Width>
+                    </Border>
+                    <Border x:Name="ProgressBarHost" Background="Transparent" />
+                </Grid>
+            </Grid>
+        </Border>
         <!-- 消息列表 + 空状态 -->
-        <Grid Grid.Row="0" Background="{DynamicResource WindowBackgroundBrush}">
+        <Grid Grid.Row="1" Background="{DynamicResource WindowBackgroundBrush}">
             <ScrollViewer x:Name="MessagesScroller"
                           Style="{StaticResource FlatScrollViewerStyle}"
                           Background="Transparent" Padding="0,20,0,8">
@@ -25,8 +100,29 @@
                                     HorizontalAlignment="Left"
                                     Background="{DynamicResource AiBubbleBackgroundBrush}"
                                     BorderBrush="{DynamicResource BorderBrush}"
-                                    BorderThickness="1">
+                                    BorderThickness="1"
+                                    Opacity="0" RenderTransformOrigin="0.5,1">
+                                <Border.RenderTransform>
+                                    <TranslateTransform x:Name="BubbleMove" Y="8" />
+                                </Border.RenderTransform>
                                 <controls:MarkdownView MarkdownText="{Binding Content}" />
+                                <Border.Triggers>
+                                    <EventTrigger RoutedEvent="Loaded">
+                                        <BeginStoryboard>
+                                            <Storyboard>
+                                                <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                                                                 From="0" To="1" Duration="0:0:0.25" />
+                                                <DoubleAnimation Storyboard.TargetName="BubbleMove"
+                                                                 Storyboard.TargetProperty="Y"
+                                                                 From="8" To="0" Duration="0:0:0.25">
+                                                    <DoubleAnimation.EasingFunction>
+                                                        <CubicEase EasingMode="EaseOut" />
+                                                    </DoubleAnimation.EasingFunction>
+                                                </DoubleAnimation>
+                                            </Storyboard>
+                                        </BeginStoryboard>
+                                    </EventTrigger>
+                                </Border.Triggers>
                             </Border>
                             <DataTemplate.Triggers>
                                 <DataTrigger Binding="{Binding IsUser}" Value="True">
@@ -88,12 +184,39 @@
                 <Button Style="{StaticResource SecondaryButtonStyle}"
                         Content="{DynamicResource Str.ExportZip}"
                         Command="{Binding ExportZipCommand}" Padding="14,7" />
+                <Button Style="{StaticResource SecondaryButtonStyle}"
+                        Content="{DynamicResource Str.Sandbox.Run}"
+                        Command="{Binding RunSandboxCommand}"
+                        IsEnabled="{Binding CanRunSandbox}" Padding="14,7" Margin="8,0,0,0" />
                 <TextBlock Text="{DynamicResource Str.ExportHint}" FontSize="11"
                            Foreground="{DynamicResource SecondaryTextBrush}"
                            VerticalAlignment="Center" Margin="12,0,0,0" />
             </StackPanel>
 
-            <Border Grid.Row="1" Background="{DynamicResource InputBackgroundBrush}"
+            <!-- 沙盒运行结果面板 -->
+            <Border Grid.Row="1" Background="{DynamicResource CardBackgroundBrush}"
+                    BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
+                    CornerRadius="10" Padding="14,10" Margin="24,0,24,8"
+                    Visibility="{Binding HasSandboxOutput, Converter={StaticResource BoolToVisibilityConverter}}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel>
+                        <TextBlock Text="{Binding SandboxStatus}" FontSize="12" FontWeight="SemiBold"
+                                   Foreground="{DynamicResource SuccessBrush}" />
+                        <TextBlock Text="{Binding SandboxOutput}" FontSize="11.5" FontFamily="Consolas"
+                                   Foreground="{DynamicResource SecondaryTextBrush}" TextWrapping="Wrap"
+                                   Margin="0,6,0,0" MaxHeight="160" />
+                    </StackPanel>
+                    <Button Grid.Column="1" Style="{StaticResource IconButtonStyle}" Content="✕"
+                            Command="{Binding ClearSandboxCommand}" ToolTip="{DynamicResource Str.Sandbox.Clear}"
+                            VerticalAlignment="Top" />
+                </Grid>
+            </Border>
+
+            <Border Grid.Row="2" Background="{DynamicResource InputBackgroundBrush}"
                     BorderBrush="{DynamicResource InputBorderBrush}" BorderThickness="1"
                     CornerRadius="14" Padding="14,10" Margin="24,0,24,14">
                 <Grid>

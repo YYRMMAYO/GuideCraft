@@ -33,9 +33,10 @@ public partial class App : Application
         services.AddSingleton<ICodeGenerator, CodeGenerator>();
         services.AddSingleton<IProjectExporter, ProjectExporter>();
         services.AddSingleton<IUpdateChecker, UpdateChecker>();
+        services.AddSingleton<IUsageTracker, UsageTracker>();
+        services.AddSingleton<ICodeRunner, CodeRunner>();
         services.AddSingleton<MainViewModel>();
         services.AddSingleton<SettingsViewModel>();
-        services.AddSingleton<Views.SettingsPanel>();
         services.AddTransient<MainWindow>();
         _provider = services.BuildServiceProvider();
 

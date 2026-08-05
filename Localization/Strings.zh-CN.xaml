@@ -58,6 +58,11 @@
 
     <sys:String x:Key="Str.Chat.NoApiKeyHint">请先配置 API Key：点击右上角 ⚙ 设置，前往平台申请 Key 后填入。</sys:String>
     <sys:String x:Key="Str.Chat.ApiKeyInvalid">API Key 无效或已失效，请到设置中更新 Key。</sys:String>
+    <sys:String x:Key="Str.Chat.ApiBadRequest">请求参数错误，请检查模型配置后重试。</sys:String>
+    <sys:String x:Key="Str.Chat.ApiForbidden">无访问权限（403），请检查 API Key 权限。</sys:String>
+    <sys:String x:Key="Str.Chat.ApiModelNotFound">模型不存在或已下线（404），请在设置中更换模型。</sys:String>
+    <sys:String x:Key="Str.Chat.ApiTooLarge">请求内容过长（超过模型上下文限制），请开启新对话。</sys:String>
+    <sys:String x:Key="Str.Chat.ServiceUnavailable">服务暂不可用（502/503），请稍后重试。</sys:String>
     <sys:String x:Key="Str.Chat.RateLimited">请求过于频繁（限流），请稍后再试。</sys:String>
     <sys:String x:Key="Str.Chat.ServerError">服务暂时不可用，请稍后重试。</sys:String>
     <sys:String x:Key="Str.Chat.NetworkError">网络连接异常，请检查网络后重试。</sys:String>
@@ -91,6 +96,110 @@
 
     <sys:String x:Key="Str.Provider.Qwen">千问 Qwen（推荐 · 免费额度）</sys:String>
     <sys:String x:Key="Str.Provider.DeepSeek">DeepSeek</sys:String>
+    <sys:String x:Key="Str.Provider.OpenAI">OpenAI</sys:String>
+    <sys:String x:Key="Str.Provider.Claude">Anthropic Claude</sys:String>
+    <sys:String x:Key="Str.Provider.Gemini">Google Gemini</sys:String>
+    <sys:String x:Key="Str.Provider.GLM">智谱 GLM</sys:String>
+    <sys:String x:Key="Str.Provider.Kimi">月之暗面 Kimi</sys:String>
+    <sys:String x:Key="Str.Provider.MiniMax">MiniMax</sys:String>
+    <sys:String x:Key="Str.Provider.Hunyuan">腾讯混元</sys:String>
+    <sys:String x:Key="Str.Provider.Grok">xAI Grok</sys:String>
+    <sys:String x:Key="Str.Provider.Mistral">Mistral</sys:String>
+    <sys:String x:Key="Str.Provider.Custom">自定义端点</sys:String>
     <sys:String x:Key="Str.SettingsKeyHint.Qwen">前往阿里云百炼控制台创建 DashScope API Key（新用户有免费额度）</sys:String>
     <sys:String x:Key="Str.SettingsKeyHint.DeepSeek">前往 DeepSeek 开放平台创建 API Key（免费额度即可日常使用）</sys:String>
+    <sys:String x:Key="Str.SettingsKeyHint.OpenAI">前往 OpenAI Platform 创建 API Key（需国际网络）</sys:String>
+    <sys:String x:Key="Str.SettingsKeyHint.Claude">前往 Anthropic Console 创建 API Key（需国际网络）</sys:String>
+    <sys:String x:Key="Str.SettingsKeyHint.Gemini">前往 Google AI Studio 免费创建 API Key</sys:String>
+    <sys:String x:Key="Str.SettingsKeyHint.GLM">前往智谱开放平台创建 API Key（glm-4-flash 免费）</sys:String>
+    <sys:String x:Key="Str.SettingsKeyHint.Kimi">前往 Moonshot 开放平台创建 API Key</sys:String>
+    <sys:String x:Key="Str.SettingsKeyHint.MiniMax">前往 MiniMax 开放平台创建 API Key</sys:String>
+    <sys:String x:Key="Str.SettingsKeyHint.Hunyuan">前往腾讯云混元控制台创建 API Key</sys:String>
+    <sys:String x:Key="Str.SettingsKeyHint.Grok">前往 xAI Console 创建 API Key（需国际网络）</sys:String>
+    <sys:String x:Key="Str.SettingsKeyHint.Mistral">前往 Mistral Console 创建 API Key（需国际网络）</sys:String>
+
+    <!-- ============ 设置窗口（v2.0） ============ -->
+    <sys:String x:Key="Str.SettingsNavSubtitle">偏好与账户</sys:String>
+    <sys:String x:Key="Str.SettingsNavModels">模型</sys:String>
+    <sys:String x:Key="Str.SettingsNavAppearance">外观</sys:String>
+    <sys:String x:Key="Str.SettingsNavLanguage">语言</sys:String>
+    <sys:String x:Key="Str.SettingsNavLayout">布局</sys:String>
+    <sys:String x:Key="Str.SettingsNavAgent">Agent 行为</sys:String>
+    <sys:String x:Key="Str.SettingsNavStats">用量统计</sys:String>
+    <sys:String x:Key="Str.SettingsNavAbout">关于</sys:String>
+    <sys:String x:Key="Str.SettingsBottomTip">提示：所有设置即时保存，无需点击保存按钮。</sys:String>
+
+    <sys:String x:Key="Str.SettingsHeaderModels">模型配置</sys:String>
+    <sys:String x:Key="Str.SettingsHeaderModelsDesc">管理多个模型提供方与 API 密钥</sys:String>
+    <sys:String x:Key="Str.SettingsHeaderAppearance">外观</sys:String>
+    <sys:String x:Key="Str.SettingsHeaderAppearanceDesc">选择界面主题</sys:String>
+    <sys:String x:Key="Str.SettingsHeaderLanguage">语言</sys:String>
+    <sys:String x:Key="Str.SettingsHeaderLanguageDesc">界面显示语言</sys:String>
+    <sys:String x:Key="Str.SettingsHeaderLayout">布局</sys:String>
+    <sys:String x:Key="Str.SettingsHeaderLayoutDesc">导航栏位置（侧边栏宽度可拖拽分隔条调整）</sys:String>
+    <sys:String x:Key="Str.SettingsHeaderAgent">Agent 行为</sys:String>
+    <sys:String x:Key="Str.SettingsHeaderAgentDesc">沙盒试运行与用量统计设置</sys:String>
+    <sys:String x:Key="Str.SettingsHeaderStats">用量统计</sys:String>
+    <sys:String x:Key="Str.SettingsHeaderStatsDesc">API 调用与缓存命中情况</sys:String>
+    <sys:String x:Key="Str.SettingsHeaderAbout">关于与更新</sys:String>
+    <sys:String x:Key="Str.SettingsHeaderAboutDesc">版本信息与更新检查</sys:String>
+
+    <sys:String x:Key="Str.SettingsModelsSectionTitle">模型配置</sys:String>
+    <sys:String x:Key="Str.SettingsModelsSectionDesc">每个配置对应一个 API 密钥，可自由创建多个</sys:String>
+    <sys:String x:Key="Str.SettingsDefaultBadge">默认</sys:String>
+    <sys:String x:Key="Str.SettingsDefaultCheck">设为默认配置</sys:String>
+    <sys:String x:Key="Str.SettingsCacheCheck">启用缓存（显示命中率与费用）</sys:String>
+    <sys:String x:Key="Str.SettingsSaveProfile">保存配置</sys:String>
+    <sys:String x:Key="Str.SettingsSelectedProfile">选中配置</sys:String>
+
+    <sys:String x:Key="Str.SettingsAppearanceSectionTitle">界面主题</sys:String>
+    <sys:String x:Key="Str.SettingsAppearanceSectionDesc">选择你偏好的界面主题</sys:String>
+    <sys:String x:Key="Str.SettingsThemeDesc">浅色适合明亮环境，深色适合夜间使用</sys:String>
+
+    <sys:String x:Key="Str.SettingsLanguageSectionTitle">语言 / Language</sys:String>
+    <sys:String x:Key="Str.SettingsLanguageSectionDesc">切换界面显示语言</sys:String>
+    <sys:String x:Key="Str.SettingsLanguageDesc">简体中文与 English 即时切换</sys:String>
+
+    <sys:String x:Key="Str.SettingsLayoutSectionTitle">布局</sys:String>
+    <sys:String x:Key="Str.SettingsLayoutSectionDesc">导航栏位置设置</sys:String>
+    <sys:String x:Key="Str.SettingsSidebarDesc">侧边栏宽度可拖拽分隔条调整</sys:String>
+
+    <sys:String x:Key="Str.SettingsAgentSectionTitle">Agent 行为</sys:String>
+    <sys:String x:Key="Str.SettingsAgentSectionDesc">控制代码沙盒与用量统计行为</sys:String>
+    <sys:String x:Key="Str.SettingsSandboxToggle">启用代码沙盒试运行</sys:String>
+    <sys:String x:Key="Str.SettingsSandboxDesc">生成代码后可一键在本地沙盒试运行，安全隔离（AST 预检 + 子进程 + 超时）</sys:String>
+    <sys:String x:Key="Str.SettingsSandboxTimeout">试运行超时</sys:String>
+    <sys:String x:Key="Str.SettingsSandboxTimeoutDesc">超出该时间自动终止试运行进程</sys:String>
+    <sys:String x:Key="Str.SettingsUsageToggle">显示用量统计</sys:String>
+    <sys:String x:Key="Str.SettingsUsageDesc">对话消息下方显示 token 用量与缓存命中率</sys:String>
+
+    <sys:String x:Key="Str.SettingsStatsSectionTitle">用量统计</sys:String>
+    <sys:String x:Key="Str.SettingsStatsSectionDesc">本地记录的 API 调用与费用估算（数据仅保存在本机）</sys:String>
+    <sys:String x:Key="Str.SettingsStatsRequests">请求次数</sys:String>
+    <sys:String x:Key="Str.SettingsStatsTokens">总 Tokens</sys:String>
+    <sys:String x:Key="Str.SettingsStatsCost">预估费用 (¥)</sys:String>
+    <sys:String x:Key="Str.SettingsStatsCacheRate">整体缓存命中率</sys:String>
+    <sys:String x:Key="Str.SettingsStatsCacheRateDesc">缓存命中部分按更低价格计费</sys:String>
+    <sys:String x:Key="Str.SettingsStatsRecent">最近记录</sys:String>
+
+    <sys:String x:Key="Str.SettingsAboutSectionTitle">关于与更新</sys:String>
+
+    <!-- ============ 引导进度（v2.0） ============ -->
+    <sys:String x:Key="Str.Guide.PhaseIdle">待开始</sys:String>
+    <sys:String x:Key="Str.Guide.PhaseClarify">澄清需求</sys:String>
+    <sys:String x:Key="Str.Guide.PhaseConfirm">确认摘要</sys:String>
+    <sys:String x:Key="Str.Guide.PhaseGenerate">生成代码</sys:String>
+    <sys:String x:Key="Str.Guide.PhaseIterate">迭代修改</sys:String>
+
+    <!-- ============ 沙盒试运行（v2.0） ============ -->
+    <sys:String x:Key="Str.Sandbox.Run">▶ 试运行</sys:String>
+    <sys:String x:Key="Str.Sandbox.Running">⏳ 沙盒运行中...</sys:String>
+    <sys:String x:Key="Str.Sandbox.Done">✅ 运行结束（退出码 {0}，耗时 {1:F1}s）</sys:String>
+    <sys:String x:Key="Str.Sandbox.Timeout">⏱️ 运行超时，已自动终止</sys:String>
+    <sys:String x:Key="Str.Sandbox.Rejected">⛔ 已拦截（安全预检）</sys:String>
+    <sys:String x:Key="Str.Sandbox.NoOutput">（无输出）</sys:String>
+    <sys:String x:Key="Str.Sandbox.Failed">❌ 沙盒运行失败</sys:String>
+    <sys:String x:Key="Str.Sandbox.Disabled">沙盒试运行已关闭，请在 设置 → Agent 行为 中开启</sys:String>
+    <sys:String x:Key="Str.Sandbox.Clear">清除</sys:String>
+    <sys:String x:Key="Str.Sandbox.Hint">在本地沙盒中试运行生成的 Python 脚本（自动拦截危险操作并超时保护）</sys:String>
 </ResourceDictionary>

@@ -58,6 +58,11 @@
 
     <sys:String x:Key="Str.Chat.NoApiKeyHint">Please configure an API Key first: click ⚙ Settings in the top-right corner, get a Key from the platform and fill it in.</sys:String>
     <sys:String x:Key="Str.Chat.ApiKeyInvalid">The API Key is invalid or expired. Update it in Settings.</sys:String>
+    <sys:String x:Key="Str.Chat.ApiBadRequest">Bad request. Check your model configuration and retry.</sys:String>
+    <sys:String x:Key="Str.Chat.ApiForbidden">Access denied (403). Check your API Key permissions.</sys:String>
+    <sys:String x:Key="Str.Chat.ApiModelNotFound">Model not found or retired (404). Switch model in Settings.</sys:String>
+    <sys:String x:Key="Str.Chat.ApiTooLarge">Request too large (exceeds context limit). Start a new conversation.</sys:String>
+    <sys:String x:Key="Str.Chat.ServiceUnavailable">Service temporarily unavailable (502/503). Try again later.</sys:String>
     <sys:String x:Key="Str.Chat.RateLimited">Too many requests (rate limited). Please try again later.</sys:String>
     <sys:String x:Key="Str.Chat.ServerError">Service temporarily unavailable. Please try again later.</sys:String>
     <sys:String x:Key="Str.Chat.NetworkError">Network connection error. Check your network and retry.</sys:String>
@@ -91,6 +96,110 @@
 
     <sys:String x:Key="Str.Provider.Qwen">Qwen (Recommended · Free tier)</sys:String>
     <sys:String x:Key="Str.Provider.DeepSeek">DeepSeek</sys:String>
+    <sys:String x:Key="Str.Provider.OpenAI">OpenAI</sys:String>
+    <sys:String x:Key="Str.Provider.Claude">Anthropic Claude</sys:String>
+    <sys:String x:Key="Str.Provider.Gemini">Google Gemini</sys:String>
+    <sys:String x:Key="Str.Provider.GLM">Zhipu GLM</sys:String>
+    <sys:String x:Key="Str.Provider.Kimi">Moonshot Kimi</sys:String>
+    <sys:String x:Key="Str.Provider.MiniMax">MiniMax</sys:String>
+    <sys:String x:Key="Str.Provider.Hunyuan">Tencent Hunyuan</sys:String>
+    <sys:String x:Key="Str.Provider.Grok">xAI Grok</sys:String>
+    <sys:String x:Key="Str.Provider.Mistral">Mistral</sys:String>
+    <sys:String x:Key="Str.Provider.Custom">Custom endpoint</sys:String>
     <sys:String x:Key="Str.SettingsKeyHint.Qwen">Create a DashScope API Key at Alibaba Cloud Bailian console (free tier for new users)</sys:String>
     <sys:String x:Key="Str.SettingsKeyHint.DeepSeek">Create an API Key at DeepSeek Open Platform (free tier is enough for daily use)</sys:String>
+    <sys:String x:Key="Str.SettingsKeyHint.OpenAI">Create an API Key at OpenAI Platform (international network required)</sys:String>
+    <sys:String x:Key="Str.SettingsKeyHint.Claude">Create an API Key at Anthropic Console (international network required)</sys:String>
+    <sys:String x:Key="Str.SettingsKeyHint.Gemini">Create a free API Key at Google AI Studio</sys:String>
+    <sys:String x:Key="Str.SettingsKeyHint.GLM">Create an API Key at Zhipu Open Platform (glm-4-flash is free)</sys:String>
+    <sys:String x:Key="Str.SettingsKeyHint.Kimi">Create an API Key at Moonshot Open Platform</sys:String>
+    <sys:String x:Key="Str.SettingsKeyHint.MiniMax">Create an API Key at MiniMax Open Platform</sys:String>
+    <sys:String x:Key="Str.SettingsKeyHint.Hunyuan">Create an API Key at Tencent Cloud Hunyuan console</sys:String>
+    <sys:String x:Key="Str.SettingsKeyHint.Grok">Create an API Key at xAI Console (international network required)</sys:String>
+    <sys:String x:Key="Str.SettingsKeyHint.Mistral">Create an API Key at Mistral Console (international network required)</sys:String>
+
+    <!-- ============ Settings Window (v2.0) ============ -->
+    <sys:String x:Key="Str.SettingsNavSubtitle">Preferences &amp; Account</sys:String>
+    <sys:String x:Key="Str.SettingsNavModels">Models</sys:String>
+    <sys:String x:Key="Str.SettingsNavAppearance">Appearance</sys:String>
+    <sys:String x:Key="Str.SettingsNavLanguage">Language</sys:String>
+    <sys:String x:Key="Str.SettingsNavLayout">Layout</sys:String>
+    <sys:String x:Key="Str.SettingsNavAgent">Agent Behavior</sys:String>
+    <sys:String x:Key="Str.SettingsNavStats">Usage Stats</sys:String>
+    <sys:String x:Key="Str.SettingsNavAbout">About</sys:String>
+    <sys:String x:Key="Str.SettingsBottomTip">Tip: all settings are saved instantly, no save button needed.</sys:String>
+
+    <sys:String x:Key="Str.SettingsHeaderModels">Model Configuration</sys:String>
+    <sys:String x:Key="Str.SettingsHeaderModelsDesc">Manage model providers and API keys</sys:String>
+    <sys:String x:Key="Str.SettingsHeaderAppearance">Appearance</sys:String>
+    <sys:String x:Key="Str.SettingsHeaderAppearanceDesc">Choose the interface theme</sys:String>
+    <sys:String x:Key="Str.SettingsHeaderLanguage">Language</sys:String>
+    <sys:String x:Key="Str.SettingsHeaderLanguageDesc">Interface display language</sys:String>
+    <sys:String x:Key="Str.SettingsHeaderLayout">Layout</sys:String>
+    <sys:String x:Key="Str.SettingsHeaderLayoutDesc">Sidebar position (drag the splitter to resize)</sys:String>
+    <sys:String x:Key="Str.SettingsHeaderAgent">Agent Behavior</sys:String>
+    <sys:String x:Key="Str.SettingsHeaderAgentDesc">Code sandbox and usage stats settings</sys:String>
+    <sys:String x:Key="Str.SettingsHeaderStats">Usage Stats</sys:String>
+    <sys:String x:Key="Str.SettingsHeaderStatsDesc">API calls and cache hit statistics</sys:String>
+    <sys:String x:Key="Str.SettingsHeaderAbout">About &amp; Updates</sys:String>
+    <sys:String x:Key="Str.SettingsHeaderAboutDesc">Version info and update check</sys:String>
+
+    <sys:String x:Key="Str.SettingsModelsSectionTitle">Model Configuration</sys:String>
+    <sys:String x:Key="Str.SettingsModelsSectionDesc">Each profile maps to one API key; create as many as you need</sys:String>
+    <sys:String x:Key="Str.SettingsDefaultBadge">Default</sys:String>
+    <sys:String x:Key="Str.SettingsDefaultCheck">Set as default profile</sys:String>
+    <sys:String x:Key="Str.SettingsCacheCheck">Enable cache (show hit rate &amp; cost)</sys:String>
+    <sys:String x:Key="Str.SettingsSaveProfile">Save Profile</sys:String>
+    <sys:String x:Key="Str.SettingsSelectedProfile">Selected Profile</sys:String>
+
+    <sys:String x:Key="Str.SettingsAppearanceSectionTitle">Interface Theme</sys:String>
+    <sys:String x:Key="Str.SettingsAppearanceSectionDesc">Choose your preferred theme</sys:String>
+    <sys:String x:Key="Str.SettingsThemeDesc">Light for bright environments, dark for night use</sys:String>
+
+    <sys:String x:Key="Str.SettingsLanguageSectionTitle">语言 / Language</sys:String>
+    <sys:String x:Key="Str.SettingsLanguageSectionDesc">Switch the interface language</sys:String>
+    <sys:String x:Key="Str.SettingsLanguageDesc">Switch between Simplified Chinese and English instantly</sys:String>
+
+    <sys:String x:Key="Str.SettingsLayoutSectionTitle">Layout</sys:String>
+    <sys:String x:Key="Str.SettingsLayoutSectionDesc">Sidebar position settings</sys:String>
+    <sys:String x:Key="Str.SettingsSidebarDesc">Drag the splitter to resize the sidebar</sys:String>
+
+    <sys:String x:Key="Str.SettingsAgentSectionTitle">Agent Behavior</sys:String>
+    <sys:String x:Key="Str.SettingsAgentSectionDesc">Control code sandbox and usage stats behavior</sys:String>
+    <sys:String x:Key="Str.SettingsSandboxToggle">Enable code sandbox trial run</sys:String>
+    <sys:String x:Key="Str.SettingsSandboxDesc">Trial-run generated code locally in a sandbox (AST check + subprocess + timeout)</sys:String>
+    <sys:String x:Key="Str.SettingsSandboxTimeout">Trial-run timeout</sys:String>
+    <sys:String x:Key="Str.SettingsSandboxTimeoutDesc">Automatically terminate the process after this duration</sys:String>
+    <sys:String x:Key="Str.SettingsUsageToggle">Show usage stats</sys:String>
+    <sys:String x:Key="Str.SettingsUsageDesc">Show token usage and cache hit rate below chat messages</sys:String>
+
+    <sys:String x:Key="Str.SettingsStatsSectionTitle">Usage Statistics</sys:String>
+    <sys:String x:Key="Str.SettingsStatsSectionDesc">Local API call log and cost estimate (data stays on this machine)</sys:String>
+    <sys:String x:Key="Str.SettingsStatsRequests">Requests</sys:String>
+    <sys:String x:Key="Str.SettingsStatsTokens">Total Tokens</sys:String>
+    <sys:String x:Key="Str.SettingsStatsCost">Est. Cost (¥)</sys:String>
+    <sys:String x:Key="Str.SettingsStatsCacheRate">Overall Cache Hit Rate</sys:String>
+    <sys:String x:Key="Str.SettingsStatsCacheRateDesc">Cached tokens are billed at a much lower rate</sys:String>
+    <sys:String x:Key="Str.SettingsStatsRecent">Recent Records</sys:String>
+
+    <sys:String x:Key="Str.SettingsAboutSectionTitle">About &amp; Updates</sys:String>
+
+    <!-- ============ Guide Progress (v2.0) ============ -->
+    <sys:String x:Key="Str.Guide.PhaseIdle">Ready</sys:String>
+    <sys:String x:Key="Str.Guide.PhaseClarify">Clarifying</sys:String>
+    <sys:String x:Key="Str.Guide.PhaseConfirm">Confirming</sys:String>
+    <sys:String x:Key="Str.Guide.PhaseGenerate">Generating</sys:String>
+    <sys:String x:Key="Str.Guide.PhaseIterate">Iterating</sys:String>
+
+    <!-- ============ Sandbox (v2.0) ============ -->
+    <sys:String x:Key="Str.Sandbox.Run">▶ Trial Run</sys:String>
+    <sys:String x:Key="Str.Sandbox.Running">⏳ Running in sandbox...</sys:String>
+    <sys:String x:Key="Str.Sandbox.Done">✅ Finished (exit code {0}, {1:F1}s)</sys:String>
+    <sys:String x:Key="Str.Sandbox.Timeout">⏱️ Timed out, process terminated</sys:String>
+    <sys:String x:Key="Str.Sandbox.Rejected">⛔ Blocked (security precheck)</sys:String>
+    <sys:String x:Key="Str.Sandbox.NoOutput">(no output)</sys:String>
+    <sys:String x:Key="Str.Sandbox.Failed">❌ Sandbox run failed</sys:String>
+    <sys:String x:Key="Str.Sandbox.Disabled">Sandbox is disabled. Enable it in Settings → Agent Behavior</sys:String>
+    <sys:String x:Key="Str.Sandbox.Clear">Clear</sys:String>
+    <sys:String x:Key="Str.Sandbox.Hint">Trial-run the generated Python script in a local sandbox (dangerous operations blocked, timeout protected)</sys:String>
 </ResourceDictionary>
