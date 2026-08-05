@@ -78,6 +78,19 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private bool _isSidebarRight = true;
 
+    /// <summary>侧边栏宽度（GridSplitter 双向拖动，左右布局共用）</summary>
+    [ObservableProperty]
+    private System.Windows.GridLength _sidebarWidth = new(240);
+
+    public bool IsLeftLayout => !IsSidebarRight;
+    public bool IsRightLayout => IsSidebarRight;
+
+    partial void OnIsSidebarRightChanged(bool value)
+    {
+        OnPropertyChanged(nameof(IsLeftLayout));
+        OnPropertyChanged(nameof(IsRightLayout));
+    }
+
     [ObservableProperty]
     private bool _isWelcomeVisible;
 

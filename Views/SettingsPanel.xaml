@@ -174,77 +174,111 @@
                 </StackPanel>
             </Border>
 
-            <!-- ============ 偏好设置 ============ -->
-            <Border Background="{DynamicResource CardBackgroundBrush}"
-                    BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
-                    CornerRadius="16" Padding="20,18" Margin="0,16,0,0">
-                <StackPanel>
-                    <TextBlock Text="偏好设置" FontSize="17" FontWeight="Bold"
-                               Foreground="{DynamicResource PrimaryTextBrush}" />
-                    <TextBlock Text="所有更改即时生效" FontSize="12"
-                               Foreground="{DynamicResource SecondaryTextBrush}" Margin="0,4,0,0" />
+            <!-- ============ 偏好设置（分区小卡片） ============ -->
+            <TextBlock Text="偏好设置" FontSize="17" FontWeight="Bold"
+                       Foreground="{DynamicResource PrimaryTextBrush}" Margin="0,22,0,2" />
+            <TextBlock Text="所有更改即时生效" FontSize="12"
+                       Foreground="{DynamicResource SecondaryTextBrush}" Margin="0,0,0,10" />
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
 
-                    <TextBlock Text="语言 / Language" FontSize="12" FontWeight="SemiBold"
-                               Foreground="{DynamicResource PrimaryTextBrush}" Margin="0,14,0,8" />
-                    <WrapPanel>
-                        <RadioButton GroupName="LangPanel" Content="简体中文"
-                                     IsChecked="{Binding SelectedLanguage, Converter={StaticResource StringEqualsBoolConverter}, ConverterParameter=zh-CN, Mode=TwoWay}"
-                                     Foreground="{DynamicResource PrimaryTextBrush}" VerticalAlignment="Center" Margin="0,0,20,0" />
-                        <RadioButton GroupName="LangPanel" Content="English"
-                                     IsChecked="{Binding SelectedLanguage, Converter={StaticResource StringEqualsBoolConverter}, ConverterParameter=en-US, Mode=TwoWay}"
-                                     Foreground="{DynamicResource PrimaryTextBrush}" VerticalAlignment="Center" />
-                    </WrapPanel>
-
-                    <TextBlock Text="界面主题" FontSize="12" FontWeight="SemiBold"
-                               Foreground="{DynamicResource PrimaryTextBrush}" Margin="0,14,0,8" />
-                    <WrapPanel>
-                        <RadioButton GroupName="ThemePanel" Content="浅色"
-                                     IsChecked="{Binding SelectedTheme, Converter={StaticResource StringEqualsBoolConverter}, ConverterParameter=Light, Mode=TwoWay}"
-                                     Foreground="{DynamicResource PrimaryTextBrush}" VerticalAlignment="Center" Margin="0,0,20,0" />
-                        <RadioButton GroupName="ThemePanel" Content="深色"
-                                     IsChecked="{Binding SelectedTheme, Converter={StaticResource StringEqualsBoolConverter}, ConverterParameter=Dark, Mode=TwoWay}"
-                                     Foreground="{DynamicResource PrimaryTextBrush}" VerticalAlignment="Center" />
-                    </WrapPanel>
-
-                    <TextBlock Text="导航栏位置" FontSize="12" FontWeight="SemiBold"
-                               Foreground="{DynamicResource PrimaryTextBrush}" Margin="0,14,0,8" />
-                    <WrapPanel>
-                        <RadioButton GroupName="SidebarPanel" Content="左侧"
-                                     IsChecked="{Binding SelectedSidebar, Converter={StaticResource StringEqualsBoolConverter}, ConverterParameter=Left, Mode=TwoWay}"
-                                     Foreground="{DynamicResource PrimaryTextBrush}" VerticalAlignment="Center" Margin="0,0,20,0" />
-                        <RadioButton GroupName="SidebarPanel" Content="右侧"
-                                     IsChecked="{Binding SelectedSidebar, Converter={StaticResource StringEqualsBoolConverter}, ConverterParameter=Right, Mode=TwoWay}"
-                                     Foreground="{DynamicResource PrimaryTextBrush}" VerticalAlignment="Center" />
-                    </WrapPanel>
-                </StackPanel>
-            </Border>
-
-            <!-- ============ 关于与更新 ============ -->
-            <Border Background="{DynamicResource CardBackgroundBrush}"
-                    BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
-                    CornerRadius="16" Padding="20,18" Margin="0,16,0,0">
-                <StackPanel>
-                    <TextBlock Text="关于与更新" FontSize="17" FontWeight="Bold"
-                               Foreground="{DynamicResource PrimaryTextBrush}" />
-                    <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
-                        <TextBlock Text="GuideCraft v" FontSize="12" Foreground="{DynamicResource SecondaryTextBrush}" />
-                        <TextBlock Text="{Binding VersionText}" FontSize="12" Foreground="{DynamicResource SecondaryTextBrush}" />
-                        <TextBlock Text=" · 引导式AI助手" FontSize="12" Foreground="{DynamicResource SecondaryTextBrush}" />
+                <!-- 外观卡片 -->
+                <Border Grid.Row="0" Grid.Column="0" Margin="0,0,8,12"
+                        Background="{DynamicResource CardBackgroundBrush}"
+                        BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
+                        CornerRadius="14" Padding="18,16">
+                    <StackPanel>
+                        <TextBlock Text="外观" FontSize="14" FontWeight="SemiBold"
+                                   Foreground="{DynamicResource PrimaryTextBrush}" />
+                        <TextBlock Text="{DynamicResource Str.SettingsTheme}" FontSize="11"
+                                   Foreground="{DynamicResource SecondaryTextBrush}" Margin="0,10,0,8" />
+                        <WrapPanel>
+                            <RadioButton GroupName="ThemePanel" Content="{DynamicResource Str.SettingsThemeLight}"
+                                         IsChecked="{Binding SelectedTheme, Converter={StaticResource StringEqualsBoolConverter}, ConverterParameter=Light, Mode=TwoWay}"
+                                         Foreground="{DynamicResource PrimaryTextBrush}" VerticalAlignment="Center" Margin="0,0,18,0" />
+                            <RadioButton GroupName="ThemePanel" Content="{DynamicResource Str.SettingsThemeDark}"
+                                         IsChecked="{Binding SelectedTheme, Converter={StaticResource StringEqualsBoolConverter}, ConverterParameter=Dark, Mode=TwoWay}"
+                                         Foreground="{DynamicResource PrimaryTextBrush}" VerticalAlignment="Center" />
+                        </WrapPanel>
                     </StackPanel>
-                    <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
-                        <Button Style="{StaticResource SecondaryButtonStyle}"
-                                Content="{Binding IsCheckingUpdate, Converter={StaticResource TestTextConverter}, ConverterParameter=update}"
-                                Command="{Binding CheckUpdateCommand}"
-                                IsEnabled="{Binding IsCheckingUpdate, Converter={StaticResource InverseBoolConverter}}" />
-                        <Button Style="{StaticResource PrimaryButtonStyle}" Content="下载新版本"
-                                Command="{Binding OpenReleaseCommand}"
-                                Visibility="{Binding HasUpdate, Converter={StaticResource BoolToVisibilityConverter}}"
-                                Margin="8,0,0,0" />
+                </Border>
+
+                <!-- 语言卡片 -->
+                <Border Grid.Row="0" Grid.Column="1" Margin="8,0,0,12"
+                        Background="{DynamicResource CardBackgroundBrush}"
+                        BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
+                        CornerRadius="14" Padding="18,16">
+                    <StackPanel>
+                        <TextBlock Text="语言 / Language" FontSize="14" FontWeight="SemiBold"
+                                   Foreground="{DynamicResource PrimaryTextBrush}" />
+                        <TextBlock Text="界面显示语言" FontSize="11"
+                                   Foreground="{DynamicResource SecondaryTextBrush}" Margin="0,10,0,8" />
+                        <WrapPanel>
+                            <RadioButton GroupName="LangPanel" Content="简体中文"
+                                         IsChecked="{Binding SelectedLanguage, Converter={StaticResource StringEqualsBoolConverter}, ConverterParameter=zh-CN, Mode=TwoWay}"
+                                         Foreground="{DynamicResource PrimaryTextBrush}" VerticalAlignment="Center" Margin="0,0,18,0" />
+                            <RadioButton GroupName="LangPanel" Content="English"
+                                         IsChecked="{Binding SelectedLanguage, Converter={StaticResource StringEqualsBoolConverter}, ConverterParameter=en-US, Mode=TwoWay}"
+                                         Foreground="{DynamicResource PrimaryTextBrush}" VerticalAlignment="Center" />
+                        </WrapPanel>
                     </StackPanel>
-                    <TextBlock Text="{Binding UpdateStatus}" FontSize="12" Margin="0,8,0,0"
-                               Foreground="{DynamicResource SecondaryTextBrush}" TextWrapping="Wrap" />
-                </StackPanel>
-            </Border>
+                </Border>
+
+                <!-- 布局卡片 -->
+                <Border Grid.Row="1" Grid.Column="0" Margin="0,0,8,0"
+                        Background="{DynamicResource CardBackgroundBrush}"
+                        BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
+                        CornerRadius="14" Padding="18,16">
+                    <StackPanel>
+                        <TextBlock Text="布局" FontSize="14" FontWeight="SemiBold"
+                                   Foreground="{DynamicResource PrimaryTextBrush}" />
+                        <TextBlock Text="导航栏位置（宽度可拖拽分隔条调整）" FontSize="11"
+                                   Foreground="{DynamicResource SecondaryTextBrush}" Margin="0,10,0,8" />
+                        <WrapPanel>
+                            <RadioButton GroupName="SidebarPanel" Content="{DynamicResource Str.SettingsSidebarLeft}"
+                                         IsChecked="{Binding SelectedSidebar, Converter={StaticResource StringEqualsBoolConverter}, ConverterParameter=Left, Mode=TwoWay}"
+                                         Foreground="{DynamicResource PrimaryTextBrush}" VerticalAlignment="Center" Margin="0,0,18,0" />
+                            <RadioButton GroupName="SidebarPanel" Content="{DynamicResource Str.SettingsSidebarRight}"
+                                         IsChecked="{Binding SelectedSidebar, Converter={StaticResource StringEqualsBoolConverter}, ConverterParameter=Right, Mode=TwoWay}"
+                                         Foreground="{DynamicResource PrimaryTextBrush}" VerticalAlignment="Center" />
+                        </WrapPanel>
+                    </StackPanel>
+                </Border>
+
+                <!-- 关于与更新卡片 -->
+                <Border Grid.Row="1" Grid.Column="1" Margin="8,0,0,0"
+                        Background="{DynamicResource CardBackgroundBrush}"
+                        BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
+                        CornerRadius="14" Padding="18,16">
+                    <StackPanel>
+                        <TextBlock Text="关于与更新" FontSize="14" FontWeight="SemiBold"
+                                   Foreground="{DynamicResource PrimaryTextBrush}" />
+                        <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                            <TextBlock Text="GuideCraft v" FontSize="12" Foreground="{DynamicResource SecondaryTextBrush}" />
+                            <TextBlock Text="{Binding VersionText}" FontSize="12" Foreground="{DynamicResource SecondaryTextBrush}" />
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+                            <Button Style="{StaticResource SecondaryButtonStyle}"
+                                    Content="{Binding IsCheckingUpdate, Converter={StaticResource TestTextConverter}, ConverterParameter=update}"
+                                    Command="{Binding CheckUpdateCommand}"
+                                    IsEnabled="{Binding IsCheckingUpdate, Converter={StaticResource InverseBoolConverter}}" />
+                            <Button Style="{StaticResource PrimaryButtonStyle}" Content="⬇ 下载"
+                                    Command="{Binding OpenReleaseCommand}"
+                                    Visibility="{Binding HasUpdate, Converter={StaticResource BoolToVisibilityConverter}}"
+                                    Margin="8,0,0,0" />
+                        </StackPanel>
+                        <TextBlock Text="{Binding UpdateStatus}" FontSize="11" Margin="0,8,0,0"
+                                   Foreground="{DynamicResource SecondaryTextBrush}" TextWrapping="Wrap" />
+                    </StackPanel>
+                </Border>
+            </Grid>
         </StackPanel>
     </ScrollViewer>
 </UserControl>

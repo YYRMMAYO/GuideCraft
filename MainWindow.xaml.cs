@@ -1,5 +1,4 @@
 ﻿using System.Windows;
-using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Shapes;
@@ -7,9 +6,11 @@ using GuideCraft.ViewModels;
 
 namespace GuideCraft;
 
-/// <summary>主窗口：三区布局，Enter 发送，滚动跟随，引导教程动画</summary>
+/// <summary>主窗口：双布局 + 屏幕边缘磁吸 + 引导动画</summary>
 public partial class MainWindow : Window
 {
+    private const int SnapThreshold = 14;
+
     private readonly MainViewModel _vm;
     private readonly Ellipse[] _dots;
 
@@ -19,33 +20,42 @@ public partial class MainWindow : Window
         _vm = vm;
         DataContext = vm;
 
-        vm.ScrollToBottomRequested += () =>
-        {
-            Dispatcher.BeginInvoke(() => MessagesScroller.ScrollToEnd());
-        };
-
-        vm.WelcomeStepChanged += step =>
-        {
-            Dispatcher.BeginInvoke(() => PlayWelcomeAnimation(step));
-        };
-
         _dots = new[] { Dot0, Dot1, Dot2, Dot3 };
+        vm.WelcomeStepChanged += step => Dispatcher.BeginInvoke(() => PlayWelcomeAnimation(step));
+
+        // 窗口磁吸：拖动靠近屏幕边缘时自动吸附
+        LocationChanged += OnWindowLocationChanged;
+
         Loaded += (_, _) =>
         {
             if (_vm.IsWelcomeVisible) PlayWelcomeAnimation(_vm.CurrentStep);
         };
     }
 
-    private void InputBox_OnKeyDown(object sender, KeyEventArgs e)
+    /// <summary>窗口拖动到屏幕工作区边缘（阈值内）自动磁吸</summary>
+    private void OnWindowLocationChanged(object? sender, EventArgs e)
     {
-        // Enter 发送（Shift+Enter 换行）
-        if (e.Key == Key.Enter && Keyboard.Modifiers != ModifierKeys.Shift)
+        if (WindowState != WindowState.Normal) return;
+
+        var wa = SystemParameters.WorkArea;
+        double left = Left;
+        double top = Top;
+        double right = wa.Right - (Left + Width);
+        double bottom = wa.Bottom - (Top + Height);
+
+        double newLeft = Left;
+        double newTop = Top;
+
+        if (Math.Abs(left) < SnapThreshold) newLeft = wa.Left;
+        else if (Math.Abs(right) < SnapThreshold) newLeft = wa.Right - Width;
+
+        if (Math.Abs(top) < SnapThreshold) newTop = wa.Top;
+        else if (Math.Abs(bottom) < SnapThreshold) newTop = wa.Bottom - Height;
+
+        if (Math.Abs(newLeft - Left) > 0.1 || Math.Abs(newTop - Top) > 0.1)
         {
-            if (_vm.SendCommand.CanExecute(null))
-            {
-                _vm.SendCommand.Execute(null);
-                e.Handled = true;
-            }
+            Left = newLeft;
+            Top = newTop;
         }
     }
 
