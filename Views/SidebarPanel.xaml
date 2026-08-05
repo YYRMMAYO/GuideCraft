@@ -3,18 +3,101 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <Border Background="{DynamicResource SidebarBackgroundBrush}">
         <DockPanel Margin="12,14">
-            <!-- 新建对话 -->
+
+            <!-- ============ 上部：Agent 引导辅助条（参考 Cursor 辅助面板） ============ -->
+            <Border DockPanel.Dock="Top" Background="{DynamicResource CardBackgroundBrush}"
+                    BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
+                    CornerRadius="12" Padding="12,12" Margin="0,0,0,14"
+                    Visibility="{Binding HasMessages, Converter={StaticResource BoolToVisibilityConverter}}">
+                <StackPanel>
+                    <!-- 标题行：阶段徽章 + 百分比 -->
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <Border Width="20" Height="20" CornerRadius="6"
+                                    Background="{DynamicResource AccentBrush}" VerticalAlignment="Center">
+                                <TextBlock Text="✦" Foreground="White" FontSize="10"
+                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Border>
+                            <TextBlock Text="Agent 引导" FontSize="12.5" FontWeight="Bold"
+                                       Foreground="{DynamicResource PrimaryTextBrush}"
+                                       VerticalAlignment="Center" Margin="8,0,0,0" />
+                        </StackPanel>
+                        <TextBlock Grid.Column="1" FontSize="13" FontWeight="Bold"
+                                   Foreground="{DynamicResource AccentBrush}" VerticalAlignment="Center"
+                                   Text="{Binding GuideProgressPercent, StringFormat={}{0:F0}%}" />
+                    </Grid>
+
+                    <!-- 当前阶段 -->
+                    <Border Background="{DynamicResource SelectedBackgroundBrush}" CornerRadius="8"
+                            Padding="10,5" Margin="0,10,0,0">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="阶段：" FontSize="11"
+                                       Foreground="{DynamicResource TertiaryTextBrush}" VerticalAlignment="Center" />
+                            <TextBlock Text="{Binding GuidePhaseLabel}" FontSize="11" FontWeight="SemiBold"
+                                       Foreground="{DynamicResource AccentBrush}" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- 底部进度条（动画填充） -->
+                    <Grid Height="4" Margin="0,10,0,0">
+                        <Border Background="{DynamicResource InputBorderBrush}" CornerRadius="2" />
+                        <Border x:Name="ProgressFill" Background="{DynamicResource AccentBrush}" CornerRadius="2"
+                                HorizontalAlignment="Left">
+                            <Border.Width>
+                                <MultiBinding Converter="{StaticResource PercentToWidthConverter}">
+                                    <Binding Path="GuideProgressPercent" />
+                                    <Binding ElementName="ProgressBarHost" Path="ActualWidth" />
+                                </MultiBinding>
+                            </Border.Width>
+                        </Border>
+                        <Border x:Name="ProgressBarHost" Background="Transparent" />
+                    </Grid>
+
+                    <!-- 8 维度进度网格（2 列） -->
+                    <ItemsControl ItemsSource="{Binding GuideDimensions}" Margin="0,12,0,0">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <UniformGrid Columns="2" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border x:Name="DimDot" Background="{DynamicResource InputBackgroundBrush}"
+                                        CornerRadius="7" Padding="8,6" Margin="0,0,6,6">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock x:Name="DimIcon" Text="{Binding Icon}" FontSize="11" Margin="0,0,6,0" />
+                                        <TextBlock x:Name="DimLabel" Text="{Binding Label}" FontSize="11"
+                                                   Foreground="{DynamicResource SecondaryTextBrush}"
+                                                   VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </Border>
+                                <DataTemplate.Triggers>
+                                    <DataTrigger Binding="{Binding IsCaptured}" Value="True">
+                                        <Setter TargetName="DimDot" Property="Background" Value="{DynamicResource SelectedBackgroundBrush}" />
+                                        <Setter TargetName="DimLabel" Property="Foreground" Value="{DynamicResource AccentBrush}" />
+                                        <Setter TargetName="DimLabel" Property="FontWeight" Value="SemiBold" />
+                                    </DataTrigger>
+                                </DataTemplate.Triggers>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </Border>
+
+            <!-- ============ 下部：新建对话 + 会话列表 ============ -->
             <Button DockPanel.Dock="Top" Style="{StaticResource PrimaryButtonStyle}"
                     Content="{DynamicResource Str.NewChat}"
                     Command="{Binding NewConversationCommand}"
                     Margin="0,0,0,14" />
 
-            <!-- 会话列表标题 -->
             <TextBlock DockPanel.Dock="Top" Text="历史对话" FontSize="11"
                        Foreground="{DynamicResource TertiaryTextBrush}"
                        Margin="12,0,0,6" />
 
-            <!-- 会话列表 -->
             <ListBox ItemsSource="{Binding Conversations}"
                      SelectedItem="{Binding SelectedConversation}"
                      ItemContainerStyle="{StaticResource ConversationItemStyle}"

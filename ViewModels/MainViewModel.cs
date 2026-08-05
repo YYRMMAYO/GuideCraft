@@ -71,7 +71,7 @@ public partial class MainViewModel : ObservableObject
     private bool _isSidebarRight = true;
 
     [ObservableProperty]
-    private System.Windows.GridLength _sidebarWidth = new(260);
+    private System.Windows.GridLength _sidebarWidth = new(300);
 
     public bool IsLeftLayout => !IsSidebarRight;
     public bool IsRightLayout => IsSidebarRight;
