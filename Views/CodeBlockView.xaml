@@ -1,0 +1,50 @@
+<UserControl x:Class="GuideCraft.Views.CodeBlockView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ae="http://icsharpcode.net/sharpdevelop/avalonedit">
+    <Border Background="{DynamicResource CodeBackgroundBrush}"
+            BorderBrush="{DynamicResource CodeBorderBrush}"
+            BorderThickness="1"
+            CornerRadius="8">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <!-- 顶部工具条：语言标签 + 复制按钮 -->
+            <Border Grid.Row="0" Background="{DynamicResource InputBackgroundBrush}"
+                    BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1"
+                    Padding="12,6" CornerRadius="8,8,0,0">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock x:Name="LangLabel" Text="text" FontSize="11"
+                               Foreground="{DynamicResource SecondaryTextBrush}"
+                               VerticalAlignment="Center" />
+                    <Button Grid.Column="1" Style="{StaticResource IconButtonStyle}"
+                            x:Name="CopyButton" Content="📋 复制"
+                            Click="CopyButton_OnClick"
+                            ToolTip="复制代码到剪贴板"
+                            Width="Auto" Height="26" Padding="10,0"
+                            FontSize="11" />
+                </Grid>
+            </Border>
+
+            <!-- 代码正文 -->
+            <ae:TextEditor x:Name="Editor" Grid.Row="1"
+                           IsReadOnly="True"
+                           ShowLineNumbers="False"
+                           WordWrap="True"
+                           FontFamily="Cascadia Code, Consolas, Courier New"
+                           FontSize="12.5"
+                           Background="Transparent"
+                           Foreground="{DynamicResource CodeTextBrush}"
+                           BorderThickness="0"
+                           Padding="10,8"
+                           MinHeight="40" MaxHeight="500" />
+        </Grid>
+    </Border>
+</UserControl>

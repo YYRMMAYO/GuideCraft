@@ -1,0 +1,80 @@
+<Window x:Class="GuideCraft.Views.SettingsDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:utils="clr-namespace:GuideCraft.Utils"
+        Title="设置"
+        Width="520" Height="Auto"
+        SizeToContent="Height"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize"
+        ShowInTaskbar="False"
+        Style="{StaticResource WindowStyle}">
+
+    <Border Background="{DynamicResource WindowBackgroundBrush}" Padding="24,20">
+        <StackPanel>
+            <!-- ============ API Key 引导卡片 ============ -->
+            <Border Background="{DynamicResource CardBackgroundBrush}"
+                    BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
+                    CornerRadius="12" Padding="16,14">
+                <StackPanel>
+                    <TextBlock Text="🔑 DeepSeek API Key" FontSize="14" FontWeight="Bold"
+                               Foreground="{DynamicResource PrimaryTextBrush}" />
+                    <TextBlock TextWrapping="Wrap" Margin="0,6,0,0" FontSize="12"
+                               Foreground="{DynamicResource SecondaryTextBrush}"
+                               Text="前往 DeepSeek 开放平台注册账号并创建一个 API Key（免费额度即可满足日常使用）。Key 仅保存在你本机（DPAPI 加密），不会上传。"
+                               LineHeight="20" />
+                    <Button Style="{StaticResource SecondaryButtonStyle}"
+                            Content="打开 DeepSeek 开放平台申请 →"
+                            Command="{Binding OpenApiKeyPageCommand}"
+                            HorizontalAlignment="Left" Margin="0,10,0,0" />
+                </StackPanel>
+            </Border>
+
+            <!-- ============ API Key 输入 ============ -->
+            <TextBlock Text="API Key" FontSize="13" Foreground="{DynamicResource PrimaryTextBrush}"
+                       Margin="0,16,0,6" />
+            <PasswordBox utils:PasswordBoxHelper.BindPassword="True"
+                         utils:PasswordBoxHelper.BoundPassword="{Binding ApiKey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                         Style="{StaticResource BasePasswordStyle}" />
+
+            <!-- 测试连接 -->
+            <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                <Button Style="{StaticResource SecondaryButtonStyle}"
+                        Content="{Binding IsTesting, Converter={StaticResource TestTextConverter}}"
+                        Command="{Binding TestConnectionCommand}"
+                        IsEnabled="{Binding IsTesting, Converter={StaticResource InverseBoolConverter}}" />
+                <TextBlock Text="{Binding TestResult}" FontSize="12" VerticalAlignment="Center"
+                           Margin="12,0,0,0"
+                           Foreground="{DynamicResource SecondaryTextBrush}" />
+            </StackPanel>
+
+            <!-- ============ 模型 ============ -->
+            <TextBlock Text="模型" FontSize="13" Foreground="{DynamicResource PrimaryTextBrush}"
+                       Margin="0,16,0,6" />
+            <ComboBox ItemsSource="{Binding Models}"
+                      SelectedItem="{Binding SelectedModel}"
+                      Background="{DynamicResource InputBackgroundBrush}"
+                      Foreground="{DynamicResource PrimaryTextBrush}"
+                      BorderBrush="{DynamicResource InputBorderBrush}"
+                      Padding="8,5" FontSize="13" />
+
+            <!-- ============ 主题 ============ -->
+            <TextBlock Text="界面主题" FontSize="13" Foreground="{DynamicResource PrimaryTextBrush}"
+                       Margin="0,16,0,6" />
+            <ComboBox ItemsSource="{Binding Themes}"
+                      SelectedItem="{Binding SelectedTheme}"
+                      Background="{DynamicResource InputBackgroundBrush}"
+                      Foreground="{DynamicResource PrimaryTextBrush}"
+                      BorderBrush="{DynamicResource InputBorderBrush}"
+                      Padding="8,5" FontSize="13" />
+
+            <!-- ============ 底部按钮 ============ -->
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,24,0,0">
+                <Button Style="{StaticResource SecondaryButtonStyle}" Content="取消"
+                        IsCancel="True" Margin="0,0,10,0" Width="88" />
+                <Button Style="{StaticResource PrimaryButtonStyle}" Content="保存"
+                        IsDefault="True" Click="SaveButton_OnClick" Width="88" />
+            </StackPanel>
+        </StackPanel>
+    </Border>
+</Window>

@@ -1,0 +1,26 @@
+# ---- Build results ----
+bin/
+obj/
+*.user
+
+# ---- VS / IDE ----
+.vs/
+*.suo
+*.userprefs
+
+# ---- Publish output ----
+publish/
+*.exe
+*.pdb
+*.zip
+
+# ---- WorkBuddy workspace ----
+.workbuddy/
+
+# ---- OS ----
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# ---- Logs ----
+*.log

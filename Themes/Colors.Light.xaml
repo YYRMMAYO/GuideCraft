@@ -1,0 +1,59 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- ===================== 浅色主题 ===================== -->
+    <!-- 主色（Color 与 Brush 双资源，供渐变复用） -->
+    <Color x:Key="AccentColor">#4C6FFF</Color>
+    <SolidColorBrush x:Key="AccentBrush" Color="{StaticResource AccentColor}" />
+    <SolidColorBrush x:Key="AccentHoverBrush" Color="#3D5CF0" />
+    <SolidColorBrush x:Key="AccentPressedBrush" Color="#334FC4" />
+
+    <!-- 窗口 / 卡片 -->
+    <SolidColorBrush x:Key="WindowBackgroundBrush" Color="#F5F6FA" />
+    <SolidColorBrush x:Key="SidebarBackgroundBrush" Color="#EDEEF4" />
+    <SolidColorBrush x:Key="CardBackgroundBrush" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="HeaderBackgroundBrush" Color="#FFFFFF" />
+
+    <!-- 文本 -->
+    <SolidColorBrush x:Key="PrimaryTextBrush" Color="#1F2329" />
+    <SolidColorBrush x:Key="SecondaryTextBrush" Color="#8A919F" />
+    <SolidColorBrush x:Key="TertiaryTextBrush" Color="#B3BAC7" />
+
+    <!-- 输入 -->
+    <SolidColorBrush x:Key="InputBackgroundBrush" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="InputBorderBrush" Color="#D9DCE3" />
+    <SolidColorBrush x:Key="InputFocusBorderBrush" Color="#4C6FFF" />
+
+    <!-- 聊天气泡 -->
+    <SolidColorBrush x:Key="UserBubbleBackgroundBrush" Color="#4C6FFF" />
+    <SolidColorBrush x:Key="UserBubbleTextBrush" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="AiBubbleBackgroundBrush" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="AiBubbleTextBrush" Color="#1F2329" />
+
+    <!-- 边框 / 分割线 -->
+    <SolidColorBrush x:Key="BorderBrush" Color="#E4E7EC" />
+    <SolidColorBrush x:Key="DividerBrush" Color="#EEF0F4" />
+
+    <!-- 代码 -->
+    <SolidColorBrush x:Key="CodeBackgroundBrush" Color="#F2F3F5" />
+    <SolidColorBrush x:Key="CodeBorderBrush" Color="#E4E7EC" />
+    <SolidColorBrush x:Key="CodeTextBrush" Color="#24292F" />
+    <SolidColorBrush x:Key="InlineCodeBackgroundBrush" Color="#F2F3F5" />
+    <SolidColorBrush x:Key="InlineCodeTextBrush" Color="#D6336C" />
+
+    <!-- 交互态 -->
+    <SolidColorBrush x:Key="HoverBackgroundBrush" Color="#F0F2F7" />
+    <SolidColorBrush x:Key="SelectedBackgroundBrush" Color="#E3E9FF" />
+    <SolidColorBrush x:Key="ScrollbarThumbBrush" Color="#C8CCD4" />
+    <SolidColorBrush x:Key="ScrollbarThumbHoverBrush" Color="#AEB4C0" />
+    <SolidColorBrush x:Key="ToolTipBackgroundBrush" Color="#FFFFFF" />
+
+    <!-- 状态色 -->
+    <SolidColorBrush x:Key="SuccessBrush" Color="#22A06B" />
+    <SolidColorBrush x:Key="WarningBrush" Color="#E8A33D" />
+    <SolidColorBrush x:Key="DangerBrush" Color="#E5484D" />
+
+    <!-- 遮罩 / 阴影 -->
+    <SolidColorBrush x:Key="OverlayBrush" Color="#66000000" />
+
+</ResourceDictionary>
